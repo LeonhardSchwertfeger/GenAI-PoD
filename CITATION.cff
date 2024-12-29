@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+title: GenAI
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - given-names: Leonhard Thomas
+    family-names: Schwertfeger
+    orcid: "https://orcid.org/0009-0002-6686-8067"
+  - given-names: Benjamin Thomas
+    family-names: Schwertfeger
+    orcid: "https://orcid.org/0000-0001-7664-8434"
+repository-code: "https://github.com/LeonhardSchwertfeger/genai"
+abstract: GenAI simplifies the process of
+  generating images using ChatGPT through Selenium
+  automation, preparing and optimizing the images for Print
+  On Demand. Additionally, it supports automated uploads to
+  online marketplaces such as Spreadshirt and Redbubble.
+keywords:
+  - ChatGPT
+  - Spreadshirt
+  - Redbubble
+  - Print On Demand
+  - GenAI
+  - Selenium
+  - Uploadtool
+  - automation
+license: GPL-3.0-or-later

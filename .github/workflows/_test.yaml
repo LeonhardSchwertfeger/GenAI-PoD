@@ -1,0 +1,41 @@
+# -*- coding: utf-8 -*-
+# Copyright (C) 2023 Benjamin Thomas Schwertfeger
+# GitHub: https://github.com/btschwertfeger
+#
+# Template workflow to run the unit tests of the package
+#
+
+name: Test Spot
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+        required: true
+      python-version:
+        type: string
+        required: true
+
+jobs:
+  Test:
+    name: Test ${{ inputs.os }} ${{ inputs.python-version }}
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Install package
+        run: python -m pip install ".[dev,test]"
+
+      - name: Run unit tests
+        run: pytest -vv tests

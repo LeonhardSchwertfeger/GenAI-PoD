@@ -1,0 +1,54 @@
+# -*- coding: utf-8 -*-
+# Copyright (C) 2023 Benjamin Thomas Schwertfeger
+# GitHub: https://github.com/btschwertfeger
+#
+# Workflow to apply pre-commit, build, test
+
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - "**"
+  schedule:
+    - cron: "20 16 * * 0"
+  release:
+    types: [created]
+
+concurrency:
+  group: CICD-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ##    Checks the code logic, style and more
+  ##
+  Pre-Commit:
+    uses: ./.github/workflows/_pre_commit.yaml
+
+  ##    Builds the package on multiple OS for multiple
+  ##    Python versions
+  ##
+  Build:
+    # needs: [Pre-Commit]
+    uses: ./.github/workflows/_build.yaml
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.11", "3.13"]
+    with:
+      os: ${{ matrix.os }}
+      python-version: ${{ matrix.python-version }}
+
+  ##    Run the unit tests for Python 3.11 until 3.13
+  ##
+  Test:
+    # needs: [Pre-Commit]
+    uses: ./.github/workflows/_test.yaml
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.11", "3.13"]
+    with:
+      os: ${{ matrix.os }}
+      python-version: ${{ matrix.python-version }}

@@ -1,0 +1,158 @@
+# -*- coding: utf-8 -*-
+# Copyright (C) 2024
+#   Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
+#   Leonhard Thomas Schwertfeger https://github.com/LeonhardSchwertfeger
+#
+
+[build-system]
+requires = ["setuptools>=65.5.1", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "genai"
+keywords = ["Spreadshirt", "Redbubble", "Automation", "Upload tool", "ChatGPT", "Selenium", "ShirtBusiness"]
+classifiers = [
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Utilities",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: AsyncIO",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: Unix",
+]
+
+dynamic = ["version"]
+authors = [
+    { name = "Benjamin Thomas Schwertfeger", email = "contact@b-schwertfeger.de" },
+    { name = "Leonhard Thomas Schwertfeger", email = "schwertfegerleonhard@gmail.com"},
+]
+description = "Tool to generate and upload images to WebShops"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+dependencies = [
+    "pillow",
+    "cloup",
+    "selenium",
+    "webdriver-manager",
+    "pytz",
+    "undetected-chromedriver==3.5.5",
+    "seleniumbase",
+    "requests",
+    "tqdm",
+    "numpy",
+]
+
+[project.scripts]
+genai = "genai.cli:cli"
+
+[project.urls]
+"Homepage" = "https://github.com/LeonhardSchwertfeger/genai"
+"Bug Tracker" = "https://github.com/LeonhardSchwertfeger/genai/issues"
+
+[project.optional-dependencies]
+dev = [
+    # building
+    "build",
+    # Linting
+    "ruff",
+    "pylint",
+    # Typing
+    "mypy",
+    # dev
+    "ipykernel", # python3 -m ipykernel install --user --name=genai
+    # documentation
+    "sphinx",
+    "sphinx-click",
+    "sphinx-rtd-theme",
+    "nbsphinx",
+    "ipython",
+]
+test = ["pytest", "pytest-cov"]
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+include = ["genai*"]
+
+[tool.setuptools_scm]
+write_to = "genai/_version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
+
+# ========= T E S T I N G ======================================================
+#
+[tool.pytest]
+junit_family = "xunit2"
+testpaths = ["tests"]
+
+[tool.pytest.ini_options]
+cache_dir = ".cache/pytest"
+markers = ["wip: Used to run a specific test by hand."]
+
+[tool.coverage.run]
+source = ["genai"]
+omit = ["*tests*"]
+
+[tool.coverage.report]
+exclude_lines = ["coverage: disable", "if TYPE_CHECKING:"]
+skip_empty = true
+
+# ========= L I N T I N G ======================================================
+#
+[tool.ruff]
+
+lint.select = [
+    "A",
+    "B",
+    "C4",
+    "E",
+    "F",
+    "I",
+    "N",
+    "RET",
+    "S",
+    "SIM",
+    "TID",
+]
+
+respect-gitignore = true
+exclude = ["scripts/*.py", "genai/impulse/*"]
+
+line-length = 100
+cache-dir = ".cache/ruff"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = [
+    "E501",
+    "F841",
+    "N802",
+    "S101",
+    "S106",
+    "S110",
+    "TID252",
+]
+
+[mypy]
+
+[mypy."undetected_chromedriver.*"]
+ignore_missing_imports = true
+
+[mypy."seleniumbase.*"]
+ignore_missing_imports = true
+
+[mypy."webdriver_manager.chrome.*"]
+ignore_missing_imports = true
+
+[mypy."numpy.*"]
+ignore_missing_imports = true
+
+[mypy."cloup.*"]
+ignore_missing_imports = true
+
+[mypy-aws_xray_sdk]
+ignore_missing_imports = true

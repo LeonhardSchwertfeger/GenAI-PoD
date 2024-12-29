@@ -1,0 +1,10 @@
+pillow
+cloup
+selenium
+webdriver-manager
+pytz
+undetected-chromedriver==3.5.5
+seleniumbase
+requests
+tqdm
+numpy
