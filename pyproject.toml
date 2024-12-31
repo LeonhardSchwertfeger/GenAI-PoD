@@ -10,7 +10,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "genai"
-keywords = ["Spreadshirt", "Redbubble", "Automation", "Upload tool", "ChatGPT", "Selenium", "ShirtBusiness"]
+keywords = [
+    "Spreadshirt",
+    "Redbubble",
+    "Automation",
+    "Upload tool",
+    "ChatGPT",
+    "Selenium",
+    "ShirtBusiness",
+]
 classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Internet :: WWW/HTTP",
@@ -18,6 +26,7 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Framework :: AsyncIO",
     "Natural Language :: English",
     "Operating System :: MacOS",
@@ -26,10 +35,10 @@ classifiers = [
 
 dynamic = ["version"]
 authors = [
+    { name = "Leonhard Thomas Schwertfeger", email = "schwertfegerleonhard@gmail.com" },
     { name = "Benjamin Thomas Schwertfeger", email = "contact@b-schwertfeger.de" },
-    { name = "Leonhard Thomas Schwertfeger", email = "schwertfegerleonhard@gmail.com"},
 ]
-description = "Tool to generate and upload images to WebShops"
+description = "CLI tool to generate and upload images to print on demand web shops."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.11"
@@ -106,19 +115,7 @@ skip_empty = true
 #
 [tool.ruff]
 
-lint.select = [
-    "A",
-    "B",
-    "C4",
-    "E",
-    "F",
-    "I",
-    "N",
-    "RET",
-    "S",
-    "SIM",
-    "TID",
-]
+lint.select = ["A", "B", "C4", "E", "F", "I", "N", "RET", "S", "SIM", "TID"]
 
 respect-gitignore = true
 exclude = ["scripts/*.py", "genai/impulse/*"]
@@ -127,15 +124,7 @@ line-length = 100
 cache-dir = ".cache/ruff"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = [
-    "E501",
-    "F841",
-    "N802",
-    "S101",
-    "S106",
-    "S110",
-    "TID252",
-]
+"tests/*.py" = ["E501", "F841", "N802", "S101", "S106", "S110", "TID252"]
 
 [mypy]
 

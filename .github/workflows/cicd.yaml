@@ -29,7 +29,7 @@ jobs:
   ##    Python versions
   ##
   Build:
-    # needs: [Pre-Commit]
+    needs: [Pre-Commit]
     uses: ./.github/workflows/_build.yaml
     strategy:
       fail-fast: false
@@ -40,10 +40,16 @@ jobs:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
 
-  ##    Run the unit tests for Python 3.11 until 3.13
+  ##    Build the documentation
+  ##
+  Build-Doc:
+    needs: [Pre-Commit]
+    uses: ./.github/workflows/_build_doc.yaml
+
+  ##    Run the unit tests for Python 3.11 and 3.13
   ##
   Test:
-    # needs: [Pre-Commit]
+    needs: [Pre-Commit]
     uses: ./.github/workflows/_test.yaml
     strategy:
       matrix:
