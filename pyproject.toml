@@ -88,6 +88,9 @@ include-package-data = false
 [tool.setuptools.packages.find]
 include = ["genai*"]
 
+[tool.setuptools.package-data]
+genai = ["resources/*.json"]
+
 [tool.setuptools_scm]
 write_to = "genai/_version.py"
 version_scheme = "guess-next-dev"

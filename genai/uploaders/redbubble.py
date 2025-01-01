@@ -181,7 +181,7 @@ def _close_overlays(sb: SB) -> None:
         logging.info("Can't click on button[aria-label='Close'")
 
 
-def _load_config(filename: str) -> dict:
+def _load_config(filename: str | Path) -> dict:
     """Load configuration settings from a JSON file.
 
     :param filename: The path to the JSON configuration file.
@@ -204,7 +204,11 @@ def _setup_clothes(sb: SB, base_scaling: str) -> None:
                          used to select scaling adjustments.
     :type base_scaling: str
     """
-    scaling_adjustments = _load_config("genai/resources/scaling_adjustments.json")
+    scaling_adjustments = _load_config(
+        Path(__file__).parent.absolute().parent
+        / "resources"
+        / "scaling_adjustments.json"
+    )
 
     if base_scaling in scaling_adjustments:
         product_adjustments = scaling_adjustments[base_scaling]
