@@ -75,7 +75,7 @@ jobs:
     secrets:
       API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
 
-  ##    Upload the python-kraken-sdk to Production PyPI
+  ##    Upload genai to PyPI
   ##
   UploadPyPI:
     if: |

@@ -60,14 +60,14 @@ jobs:
         run: |
           uv build .
           uv tool install dist/genai*.whl
-          uv run kraken --version
+          uv run genai --help
 
       - name: Build macOS
         if: runner.os == 'macOS'
         run: |
           uv build .
           uv tool install dist/genai*.whl
-          uv run kraken --version
+          uv run genai --help
 
       - name: Build Windows
         if: runner.os == 'Windows'
@@ -76,7 +76,7 @@ jobs:
           try {
               $WHEEL = Get-ChildItem -Path ./dist -Filter "genai*.whl" -ErrorAction Stop
               uv tool install $WHEEL#
-              uv run kraken --version
+              uv run genai --help
           } catch {
               Write-Error "Error: .whl file not found in .\dist."
               exit 1
