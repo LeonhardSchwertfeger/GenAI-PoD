@@ -75,7 +75,7 @@ jobs:
           uv build .
           try {
               $WHEEL = Get-ChildItem -Path ./dist -Filter "genai*.whl" -ErrorAction Stop
-              uv tool install $WHEEL#
+              uv tool install $WHEEL
               uv run genai --help
           } catch {
               Write-Error "Error: .whl file not found in .\dist."
