@@ -16,6 +16,7 @@ Welcome to the GenAI documentation.
    installation
    web_shop_usage
    command_line_interface
+   aarch64_usage
    license
 
 Indices and tables
