@@ -615,7 +615,10 @@ def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -
     :type image_file_path: str
     :raises AbortScriptError: If any step in the generation process fails.
     """
+    import time
+
     driver.set_page_load_timeout(30)
+    time.sleep(10)
 
     # Uploading image
     try:
