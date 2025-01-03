@@ -64,7 +64,7 @@ def generate(ctx: Context, output_directory: str) -> None:
 @pass_context
 def generategpt(ctx: Context, **kwargs: Any) -> None:
     """Use GPT to generate images via Selenium."""
-    from genai.generators.generate_gpt import (
+    from genai_pod.generators.generate_gpt import (
         AbortScriptError,
         generate_image_selenium_gpt,
     )
@@ -94,7 +94,7 @@ def upload(ctx: Context, **kwargs: Any) -> None:
 @pass_context
 def spreadshirt(ctx: Context, **kwargs: Any) -> None:
     """Upload an image to Spreadshirt."""
-    from genai.uploaders.spreadshirt import upload_spreadshirt
+    from genai_pod.uploaders.spreadshirt import upload_spreadshirt
 
     ctx.obj |= kwargs
     upload_spreadshirt(**ctx.obj)
@@ -104,7 +104,7 @@ def spreadshirt(ctx: Context, **kwargs: Any) -> None:
 @pass_context
 def redbubble(ctx: Context, **kwargs: Any) -> None:
     """Upload an image to Redbubble."""
-    from genai.uploaders.redbubble import upload_redbubble
+    from genai_pod.uploaders.redbubble import upload_redbubble
 
     ctx.obj |= kwargs
     upload_redbubble(**ctx.obj)
@@ -118,7 +118,7 @@ def redbubble(ctx: Context, **kwargs: Any) -> None:
 )
 def verifysite(profile_name: str) -> None:
     """Verify an account in Chrome for capsolver, ChatGPT, or Spreadshirt/Redbubble."""
-    from genai.utilitys.verify_sites import verify
+    from genai_pod.utilitys.verify_sites import verify
 
     profile_to_site = {
         "capsolver": "https://chromewebstore.google.com/detail/captcha-l%C3%B6ser-auto-hcaptc/"

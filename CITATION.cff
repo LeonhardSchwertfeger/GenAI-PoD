@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: GenAI
+title: GenAI-PoD
 message: "If you use this software, please cite it as below."
 type: software
 authors:
@@ -9,8 +9,8 @@ authors:
   - given-names: Benjamin Thomas
     family-names: Schwertfeger
     orcid: "https://orcid.org/0000-0001-7664-8434"
-repository-code: "https://github.com/LeonhardSchwertfeger/genai"
-abstract: GenAI simplifies the process of
+repository-code: "https://github.com/LeonhardSchwertfeger/GenAI-PoD"
+abstract: GenAI-PoD simplifies the process of
   generating images using ChatGPT through Selenium
   automation, preparing and optimizing the images for Print
   On Demand. Additionally, it supports automated uploads to
@@ -20,7 +20,7 @@ keywords:
   - Spreadshirt
   - Redbubble
   - Print On Demand
-  - GenAI
+  - GenAI-PoD
   - Selenium
   - Uploadtool
   - automation

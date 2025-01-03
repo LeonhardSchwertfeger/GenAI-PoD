@@ -1,4 +1,4 @@
-# GenAI: Your Command-Line Solution for AI Image Generation & Webshop Automation
+# GenAI-PoD: Your Command-Line Solution for AI Image Generation & Webshop Automation
 
 > **Automate your entire print-on-demand workflow— from AI-driven image creation
 > to uploads on leading platforms like Spreadshirt & Redbubble.**
@@ -33,14 +33,14 @@ badge](https://img.shields.io/badge/python-3.11+-blue.svg)](https://shields.io/)
 
 ## Introduction
 
-**GenAI** is a versatile command-line tool that streamlines **image generation**
+**GenAI-PoD** is a versatile command-line tool that streamlines **image generation**
 and **webshop integration**. By leveraging **ChatGPT** (via Selenium
 automation), it can programmatically create images, apply **background
 removal**, perform **upscaling**, and finally **publish** these designs on
 popular print-on-demand (POD) platforms such as **Spreadshirt** and
 **Redbubble**.
 
-**Key highlights** of GenAI include:
+**Key highlights** of GenAI-PoD include:
 
 - **Direct ChatGPT Integration** Generate AI-driven designs or concept art using
   your **OpenAI** account via automated browser interactions.
@@ -49,7 +49,7 @@ popular print-on-demand (POD) platforms such as **Spreadshirt** and
   ([remove.bg](https://www.remove.bg/)) and upscale images
   ([bigjpg.com](https://bigjpg.com/)) without leaving the command-line.
 
-- **Seamless Uploads** Eliminate manual steps: GenAI can log you in, navigate to
+- **Seamless Uploads** Eliminate manual steps: GenAI-PoD can log you in, navigate to
   forms, fill out metadata (titles, tags, descriptions), and publish your new
   designs directly to your connected Spreadshirt/Redbubble storefronts.
 

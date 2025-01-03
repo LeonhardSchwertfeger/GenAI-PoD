@@ -42,7 +42,7 @@ from selenium.webdriver.common.keys import Keys
 from seleniumbase import SB  # type: ignore[import]
 from tqdm import tqdm
 
-from genai.utils import chromedata
+from genai_pod.utils import chromedata
 
 logging.basicConfig(level=logging.INFO)
 

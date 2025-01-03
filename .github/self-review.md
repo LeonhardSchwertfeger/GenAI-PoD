@@ -5,7 +5,7 @@ must be addressed before a PR will be accepted.
 
 - [ ] **All** pre-commit hooks must run through - successfully.
 - [ ] Make sure that the changes confirm the coding style of the
-      [genai](https://github.com/LeonhardSchwertfeger/genai).
+      [GenAI-PoD](https://github.com/LeonhardSchwertfeger/GenAI-PoD).
       Most issues will be resolve through the pre-commit hooks.
 - [ ] Also take care to follow the community guidelines and the [Code of
       Conduct](/.github/CODE_OF_CONDUCT.md).
