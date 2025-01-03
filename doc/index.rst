@@ -3,10 +3,10 @@
 .. Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
 .. Leonhard Thomas Schwertfeger https://github.com/LeonhardSchwertfeger
 
-GenAI-PoD Documentation
+GenAI Documentation
 ===================
 
-Welcome to the GenAI-PoD documentation.
+Welcome to the GenAI documentation.
 
 .. toctree::
    :maxdepth: 2

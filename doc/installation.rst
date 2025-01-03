@@ -19,7 +19,7 @@ Clone the Repository
 
 .. code-block:: bash
 
-   git clone https://github.com/LeonhardSchwertfeger/GenAI-PoD.git
+   git clone https://github.com/LeonhardSchwertfeger/genai.git
 
 Create a Virtual Environment (Recommended)
 ------------------------------------------
