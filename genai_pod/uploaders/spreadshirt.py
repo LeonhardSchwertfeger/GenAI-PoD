@@ -36,7 +36,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
-from genai.utils import UploadConfig, iterate_and_upload, start_chrome
+from genai_pod.utils import UploadConfig, iterate_and_upload, start_chrome
 
 
 def upload_spreadshirt(upload_path: str) -> None:

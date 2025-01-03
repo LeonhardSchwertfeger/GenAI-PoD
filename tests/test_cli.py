@@ -6,10 +6,10 @@
 
 from unittest.mock import patch
 
-from genai.cli import cli
+from genai_pod.cli import cli
 
 
-@patch("genai.generators.generate_gpt.generate_image_selenium_gpt")
+@patch("genai_pod.generators.generate_gpt.generate_image_selenium_gpt")
 def test_cli_generate_generategpt_success(mock_generate, runner):
     mock_generate.side_effect = SystemExit(0)
     result = runner.invoke(
@@ -19,7 +19,7 @@ def test_cli_generate_generategpt_success(mock_generate, runner):
     mock_generate.assert_called_once_with(output_directory="/path/to/output")
 
 
-@patch("genai.generators.generate_gpt.generate_image_selenium_gpt")
+@patch("genai_pod.generators.generate_gpt.generate_image_selenium_gpt")
 def test_cli_generate_generategpt_exception(mock_generate, runner):
     mock_generate.side_effect = Exception("Test Exception")
     result = runner.invoke(
@@ -31,7 +31,7 @@ def test_cli_generate_generategpt_exception(mock_generate, runner):
     assert str(result.exception) == "Test Exception"
 
 
-@patch("genai.uploaders.spreadshirt.upload_spreadshirt")
+@patch("genai_pod.uploaders.spreadshirt.upload_spreadshirt")
 def test_cli_upload_spreadshirt_success(mock_upload, runner):
     mock_upload.return_value = None
     result = runner.invoke(
@@ -41,7 +41,7 @@ def test_cli_upload_spreadshirt_success(mock_upload, runner):
     mock_upload.assert_called_once_with(upload_path="/path/to/uploads")
 
 
-@patch("genai.uploaders.redbubble.upload_redbubble")
+@patch("genai_pod.uploaders.redbubble.upload_redbubble")
 def test_cli_upload_redbubble_success(mock_upload, runner):
     mock_upload.return_value = None
     result = runner.invoke(
@@ -51,7 +51,7 @@ def test_cli_upload_redbubble_success(mock_upload, runner):
     mock_upload.assert_called_once_with(upload_path="/path/to/uploads")
 
 
-@patch("genai.utilitys.verify_sites.verify")
+@patch("genai_pod.utilitys.verify_sites.verify")
 def test_cli_verifysite_capsolver_success(mock_start_chrome, runner):
     mock_start_chrome.return_value = None
     result = runner.invoke(cli, ["verifysite", "capsolver"])
