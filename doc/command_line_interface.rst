@@ -8,13 +8,13 @@
 Command-line Interface
 ----------------------
 
-The GenAI-PoD tool provides a command-line interface to generate AI images and automate uploads to various web shops like Spreadshirt and Redbubble. It performs tasks such as account verification, image generation, and uploading in the background.
+The GenAI tool provides a command-line interface to generate AI images and automate uploads to various web shops like Spreadshirt and Redbubble. It performs tasks such as account verification, image generation, and uploading in the background.
 
-The general pattern for using the GenAI-PoD CLI is:
+The general pattern for using the GenAI CLI is:
 
 ``genai [OPTIONS] COMMAND``
 
-All functionalities of the GenAI-PoD tool can be accessed using this interface. See examples below.
+All functionalities of the GenAI tool can be accessed using this interface. See examples below.
 
 
 Commands
@@ -101,6 +101,6 @@ Commands
 
 Below is the detailed usage of each command and its options.
 
-.. click:: genai_pod.cli:cli
+.. click:: genai.cli:cli
    :prog: genai
    :nested: full

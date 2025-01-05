@@ -38,7 +38,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
-from genai_pod.utils import start_chrome
+from genai.utils import start_chrome
 
 logging.basicConfig(level=logging.INFO)
 
@@ -146,7 +146,7 @@ def run_bg_remove(image_path: str) -> Path:
         try:
             WebDriverWait(driver, 80).until(
                 ec.presence_of_element_located((By.CSS_SELECTOR, "input[type='file']")),
-            ).send_keys(str(image_path))
+            ).send_keys(str(Path(image_path).resolve()))
         except Exception as e:
             _error_capsolver(driver)
             raise AbortScriptError("input[type='file'] failed") from e

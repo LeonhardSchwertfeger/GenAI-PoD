@@ -19,7 +19,7 @@ profile management for automated web interactions.
 import logging
 from pathlib import Path
 
-from genai_pod.utils import save_cookies, start_chrome
+from genai.utils import save_cookies, start_chrome
 
 
 def verify(profile_name: str, site: str) -> None:

@@ -1,0 +1,751 @@
+diff --git a/.github/CONTRIBUTING.md b/.github/CONTRIBUTING.md
+index 6756738..23c9e11 100644
+--- a/.github/CONTRIBUTING.md
++++ b/.github/CONTRIBUTING.md
+@@ -1,10 +1,10 @@
+-# Welcome to GenAI-PoD Contributing Guide
++# Welcome to genai Contributing Guide
+ 
+-Thank you for taking the time to contribute to the [GenAI-PoD](https://github.com/LeonhardSchwertfeger/GenAI-PoD/) project!
++Thank you for taking the time to contribute to the [genai](https://github.com/LeonhardSchwertfeger/genai/) project!
+ 
+ Please make sure to read our [Code of Conduct](./CODE_OF_CONDUCT.md) to ensure a respectful and welcoming community.
+ 
+-If you have questions, suggestions, or topics to discuss, feel free to participate in [GenAI-PoD/discussions](https://github.com/LeonhardSchwertfeger/GenAI-PoD/discussions). We look forward to engaging discussions, exchanging strategies, and fostering knowledge sharing!
++If you have questions, suggestions, or topics to discuss, feel free to participate in [genai/discussions](https://github.com/LeonhardSchwertfeger/genai/discussions). We look forward to engaging discussions, exchanging strategies, and fostering knowledge sharing!
+ 
+ ## Getting Started 🤖
+ 
+@@ -14,11 +14,11 @@ This guide provides an overview of the contribution workflow, including opening
+ 
+ #### Create a New Issue
+ 
+-If you encounter an issue not listed in the troubleshooting section of [README.md](https://github.com/LeonhardSchwertfeger/GenAI-PoD#readme) or [documentation](), feel free to create a new [issue](https://github.com/LeonhardSchwertfeger/GenAI-PoD/issues). If the issue or feature request does not already exist, this is the best place to share it.
++If you encounter an issue not listed in the troubleshooting section of [README.md](https://github.com/LeonhardSchwertfeger/genai#readme) or [documentation](), feel free to create a new [issue](https://github.com/LeonhardSchwertfeger/genai/issues). If the issue or feature request does not already exist, this is the best place to share it.
+ 
+ #### Solve an Issue
+ 
+-Browse through the [existing issues](https://github.com/LeonhardSchwertfeger/GenAI-PoD/issues) to find one that interests you. You can also filter issues using labels to focus on specific areas.
++Browse through the [existing issues](https://github.com/LeonhardSchwertfeger/genai/issues) to find one that interests you. You can also filter issues using labels to focus on specific areas.
+ 
+ ### Make Changes
+ 
+@@ -29,15 +29,15 @@ Browse through the [existing issues](https://github.com/LeonhardSchwertfeger/Gen
+    Clone your forked repository locally:
+ 
+    ```bash
+-   git clone https://github.com/<your-username>/GenAI-PoD.git
+-   cd GenAI-PoD
++   git clone https://github.com/<your-username>/genai.git
++   cd genai
+    ```
+ 
+ 3. **Set Up the Upstream Remote**
+    Add the original repository as the upstream remote:
+ 
+    ```bash
+-   git remote add upstream https://github.com/LeonhardSchwertfeger/GenAI-PoD.git
++   git remote add upstream https://github.com/LeonhardSchwertfeger/genai.git
+    ```
+ 
+ 4. **Synchronize Your Fork**
+@@ -107,4 +107,4 @@ Open a pull request (PR) from your fork to the original repository. Make sure to
+ 
+ ### Your PR is Merged! 🏅
+ 
+-Congratulations! Thank you for contributing to GenAI-PoD. Feel free to pick up the next issue or suggest additional improvements. 🚀
++Congratulations! Thank you for contributing to genai. Feel free to pick up the next issue or suggest additional improvements. 🚀
+diff --git a/.github/pull_request_template.md b/.github/pull_request_template.md
+index 1c679c5..a686469 100644
+--- a/.github/pull_request_template.md
++++ b/.github/pull_request_template.md
+@@ -8,9 +8,9 @@ What has being changed - provide code snippets, examples, screenshots, lists -
+ any kind of information hat helps to understand the update.
+ 
+ **Make sure to address all topics of the [self-review
+-checklist](https://github.com/LeonhardSchwertfeger/GenAI-PoD/blob/master/.github/self-review.md).**
++checklist](https://github.com/LeonhardSchwertfeger/genai/blob/master/.github/self-review.md).**
+ 
+ Closes: Don't forget to link an existing issue for your change. If there is no
+ open issue for your change - create one to make it more likely that his update
+ will be accepted:
+-[GenAI-PoD/issues/new/choose](https://github.com/LeonhardSchwertfeger/GenAI-PoD/issues/new/choose).
++[genai/issues/new/choose](https://github.com/LeonhardSchwertfeger/genai/issues/new/choose).
+diff --git a/.github/self-review.md b/.github/self-review.md
+index 228956c..458c04f 100644
+--- a/.github/self-review.md
++++ b/.github/self-review.md
+@@ -5,7 +5,7 @@ must be addressed before a PR will be accepted.
+ 
+ - [ ] **All** pre-commit hooks must run through - successfully.
+ - [ ] Make sure that the changes confirm the coding style of the
+-      [GenAI-PoD](https://github.com/LeonhardSchwertfeger/GenAI-PoD).
++      [genai](https://github.com/LeonhardSchwertfeger/genai).
+       Most issues will be resolve through the pre-commit hooks.
+ - [ ] Also take care to follow the community guidelines and the [Code of
+       Conduct](/.github/CODE_OF_CONDUCT.md).
+diff --git a/.github/workflows/_build.yaml b/.github/workflows/_build.yaml
+index cfe3a2f..606915c 100644
+--- a/.github/workflows/_build.yaml
++++ b/.github/workflows/_build.yaml
+@@ -62,13 +62,13 @@ jobs:
+ 
+       - name: Install the package on Linux or MacOS
+         if: runner.os != 'Windows'
+-        run: python -m pip install genai_pod*.whl
++        run: python -m pip install genai*.whl
+ 
+       - name: Install the package on Windows
+         if: runner.os == 'Windows'
+         run: |
+           try {
+-              $WHEEL = Get-ChildItem -Path . -Filter "genai_pod*.whl" -ErrorAction Stop
++              $WHEEL = Get-ChildItem -Path . -Filter "genai*.whl" -ErrorAction Stop
+               python -m pip install $WHEEL
+           } catch {
+               Write-Error "Error: .whl file not found in the current directory."
+diff --git a/.gitignore b/.gitignore
+index a66c7c4..50301cd 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,7 +63,7 @@ dmypy.json
+ .png
+ images/
+ .DS_Store
+-genai_pod/_version.py
++genai/_version.py
+ 
+ # chromedata
+ chromedata
+diff --git a/.pre-commit-config.yaml b/.pre-commit-config.yaml
+index 14075c8..7f6c98c 100644
+--- a/.pre-commit-config.yaml
++++ b/.pre-commit-config.yaml
+@@ -96,7 +96,7 @@ repos:
+           - --config-file=pyproject.toml
+           - --install-types
+           - --non-interactive
+-          - genai_pod
++          - genai
+   - repo: https://github.com/psf/black
+     rev: 24.10.0
+     hooks:
+diff --git a/CITATION.cff b/CITATION.cff
+index 93d7680..fadf043 100644
+--- a/CITATION.cff
++++ b/CITATION.cff
+@@ -1,5 +1,5 @@
+ cff-version: 1.2.0
+-title: GenAI-PoD
++title: GenAI
+ message: "If you use this software, please cite it as below."
+ type: software
+ authors:
+@@ -9,8 +9,8 @@ authors:
+   - given-names: Benjamin Thomas
+     family-names: Schwertfeger
+     orcid: "https://orcid.org/0000-0001-7664-8434"
+-repository-code: "https://github.com/LeonhardSchwertfeger/GenAI-PoD"
+-abstract: GenAI-PoD simplifies the process of
++repository-code: "https://github.com/LeonhardSchwertfeger/genai"
++abstract: GenAI simplifies the process of
+   generating images using ChatGPT through Selenium
+   automation, preparing and optimizing the images for Print
+   On Demand. Additionally, it supports automated uploads to
+@@ -20,7 +20,7 @@ keywords:
+   - Spreadshirt
+   - Redbubble
+   - Print On Demand
+-  - GenAI-PoD
++  - GenAI
+   - Selenium
+   - Uploadtool
+   - automation
+diff --git a/Makefile b/Makefile
+index 0b7adab..f4b3e19 100644
+--- a/Makefile
++++ b/Makefile
+@@ -72,13 +72,13 @@ ruff-fix:
+ .PHONY: clean
+ clean:
+ 	rm -rf .cache \
+-		build/ dist/ genai_pod.egg-info \
++		build/ dist/ genai.egg-info \
+ 		.ipynb_checkpoints
+ 
+ 	rm -f .coverage cmethods/_version.py
+ 
+ 	find tests -name "__pycache__" | xargs rm -rf
+-	find genai_pod -name "__pycache__" | xargs rm -rf
++	find genai -name "__pycache__" | xargs rm -rf
+ 
+ 
+ # Build the documentation
+diff --git a/README.md b/README.md
+index c42bdc2..e075a9c 100644
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-# GenAI-PoD: Your Command-Line Solution for AI Image Generation & Webshop Automation
++# GenAI: Your Command-Line Solution for AI Image Generation & Webshop Automation
+ 
+ > **Automate your entire print-on-demand workflow— from AI-driven image creation
+ > to uploads on leading platforms like Spreadshirt & Redbubble.**
+@@ -10,11 +10,11 @@ GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE)
+ [![Generic
+ badge](https://img.shields.io/badge/python-3.11+-blue.svg)](https://shields.io/)
+ 
+-[![CI/CD](https://github.com/leonhardschwertfeger/genai-pod/actions/workflows/cicd.yaml/badge.svg?branch=master)](https://github.com/leonhardschwertfeger/genai-pod/actions/workflows/cicd.yaml)
++[![CI/CD](https://github.com/leonhardschwertfeger/genai/actions/workflows/cicd.yaml/badge.svg?branch=master)](https://github.com/leonhardschwertfeger/genai/actions/workflows/cicd.yaml)
+ [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+ [![Typing](https://img.shields.io/badge/typing-mypy-informational)](https://mypy-lang.org/)
+ 
+-[![release](https://shields.io/github/release-date/leonhardschwertfeger/genai-pod)](https://github.com/leonhardschwertfeger/genai-pod/releases)
++[![release](https://shields.io/github/release-date/leonhardschwertfeger/genai)](https://github.com/leonhardschwertfeger/genai/releases)
+ [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14569412.svg)](https://doi.org/10.5281/zenodo.14569412)
+ 
+ </div>
+@@ -33,14 +33,14 @@ badge](https://img.shields.io/badge/python-3.11+-blue.svg)](https://shields.io/)
+ 
+ ## Introduction
+ 
+-**GenAI-PoD** is a versatile command-line tool that streamlines **image generation**
++**GenAI** is a versatile command-line tool that streamlines **image generation**
+ and **webshop integration**. By leveraging **ChatGPT** (via Selenium
+ automation), it can programmatically create images, apply **background
+ removal**, perform **upscaling**, and finally **publish** these designs on
+ popular print-on-demand (POD) platforms such as **Spreadshirt** and
+ **Redbubble**.
+ 
+-**Key highlights** of GenAI-PoD include:
++**Key highlights** of GenAI include:
+ 
+ - **Direct ChatGPT Integration** Generate AI-driven designs or concept art using
+   your **OpenAI** account via automated browser interactions.
+@@ -49,7 +49,7 @@ popular print-on-demand (POD) platforms such as **Spreadshirt** and
+   ([remove.bg](https://www.remove.bg/)) and upscale images
+   ([bigjpg.com](https://bigjpg.com/)) without leaving the command-line.
+ 
+-- **Seamless Uploads** Eliminate manual steps: GenAI-PoD can log you in, navigate to
++- **Seamless Uploads** Eliminate manual steps: GenAI can log you in, navigate to
+   forms, fill out metadata (titles, tags, descriptions), and publish your new
+   designs directly to your connected Spreadshirt/Redbubble storefronts.
+ 
+@@ -91,7 +91,7 @@ popular print-on-demand (POD) platforms such as **Spreadshirt** and
+ 1. **Clone the Repository**
+ 
+    ```bash
+-   git clone https://github.com/LeonhardSchwertfeger/genai-pod.git
++   git clone https://github.com/LeonhardSchwertfeger/genai.git
+    ```
+ 
+ 2. **Create a Virtual Environment (Recommended)**
+diff --git a/doc/command_line_interface.rst b/doc/command_line_interface.rst
+index d105ebc..9575020 100644
+--- a/doc/command_line_interface.rst
++++ b/doc/command_line_interface.rst
+@@ -8,13 +8,13 @@
+ Command-line Interface
+ ----------------------
+ 
+-The GenAI-PoD tool provides a command-line interface to generate AI images and automate uploads to various web shops like Spreadshirt and Redbubble. It performs tasks such as account verification, image generation, and uploading in the background.
++The GenAI tool provides a command-line interface to generate AI images and automate uploads to various web shops like Spreadshirt and Redbubble. It performs tasks such as account verification, image generation, and uploading in the background.
+ 
+-The general pattern for using the GenAI-PoD CLI is:
++The general pattern for using the GenAI CLI is:
+ 
+ ``genai [OPTIONS] COMMAND``
+ 
+-All functionalities of the GenAI-PoD tool can be accessed using this interface. See examples below.
++All functionalities of the GenAI tool can be accessed using this interface. See examples below.
+ 
+ 
+ Commands
+@@ -101,6 +101,6 @@ Commands
+ 
+ Below is the detailed usage of each command and its options.
+ 
+-.. click:: genai_pod.cli:cli
++.. click:: genai.cli:cli
+    :prog: genai
+    :nested: full
+diff --git a/doc/conf.py b/doc/conf.py
+index 43ac834..fe8e410 100644
+--- a/doc/conf.py
++++ b/doc/conf.py
+@@ -6,7 +6,7 @@
+ 
+ """Configuration file for the Sphinx documentation builder.
+ 
+-This module configures Sphinx to generate documentation for the GenAI-PoD project.
++This module configures Sphinx to generate documentation for the GenAI project.
+ 
+ """
+ 
+@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath(".."))
+ # -- Project information -----------------------------------------------------
+ # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+ 
+-project = "GenAI-PoD"  # pylint: disable=invalid-name
++project = "GenAI"  # pylint: disable=invalid-name
+ 
+ copyright = (  # noqa: A001 # pylint: disable=redefined-builtin, invalid-name
+     "2024, Leonhard Thomas Schwertfeger and Benjamin Thomas Schwertfeger"
+@@ -57,7 +57,7 @@ html_theme = "sphinx_rtd_theme"  # pylint: disable=invalid-name
+ html_context = {
+     "display_github": True,
+     "github_user": "LeonhardSchwertfeger",
+-    "github_repo": "GenAI-PoD",
++    "github_repo": "genai",
+     "github_version": "master/docs/",
+ }
+ html_theme_options = {
+diff --git a/doc/index.rst b/doc/index.rst
+index ee56ed9..aa073fb 100644
+--- a/doc/index.rst
++++ b/doc/index.rst
+@@ -3,10 +3,10 @@
+ .. Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
+ .. Leonhard Thomas Schwertfeger https://github.com/LeonhardSchwertfeger
+ 
+-GenAI-PoD Documentation
++GenAI Documentation
+ ===================
+ 
+-Welcome to the GenAI-PoD documentation.
++Welcome to the GenAI documentation.
+ 
+ .. toctree::
+    :maxdepth: 2
+diff --git a/doc/installation.rst b/doc/installation.rst
+index c433bf9..310a438 100644
+--- a/doc/installation.rst
++++ b/doc/installation.rst
+@@ -19,7 +19,7 @@ Clone the Repository
+ 
+ .. code-block:: bash
+ 
+-   git clone https://github.com/LeonhardSchwertfeger/GenAI-PoD.git
++   git clone https://github.com/LeonhardSchwertfeger/genai.git
+ 
+ Create a Virtual Environment (Recommended)
+ ------------------------------------------
+diff --git a/doc/introduction.rst b/doc/introduction.rst
+index 1b15af3..7a26c3e 100644
+--- a/doc/introduction.rst
++++ b/doc/introduction.rst
+@@ -6,13 +6,13 @@
+ Introduction
+ ============
+ 
+-Welcome to **GenAI-PoD** — your command-line tool that streamlines the process of generating and preparing images via **ChatGPT** automation. Designed with **print-on-demand (POD)** workflows in mind, GenAI-PoD can further handle background removal, upscaling, and uploading designs to popular shops like **Spreadshirt** and **Redbubble**.
++Welcome to **GenAI** — your command-line tool that streamlines the process of generating and preparing images via **ChatGPT** automation. Designed with **print-on-demand (POD)** workflows in mind, GenAI can further handle background removal, upscaling, and uploading designs to popular shops like **Spreadshirt** and **Redbubble**.
+ 
+ .. note::
+    This project is **unofficial** and not endorsed by OpenAI, Spreadshirt, Redbubble, or any related entities.
+    Always check each platform’s Terms of Service before using automated tools.
+ 
+-Why GenAI-PoD?
++Why GenAI?
+ ----------
+ 
+ 1. **Automated Image Generation**
+@@ -25,19 +25,19 @@ Why GenAI-PoD?
+    Seamlessly upscale your images with `bigjpg.com <https://bigjpg.com/>`_. Perfect for achieving high-resolution outputs for merchandise.
+ 
+ 4. **Automatic Uploads**
+-   Eliminate tedious uploading steps. GenAI-PoD directly interacts with your **Spreadshirt** or **Redbubble** account:
++   Eliminate tedious uploading steps. GenAI directly interacts with your **Spreadshirt** or **Redbubble** account:
+    - Navigates to upload pages
+    - Fills out metadata like titles, descriptions, and tags
+    - Publishes your design
+    All via preconfigured Selenium routines.
+ 
+ 5. **Account Verification**
+-   Tired of constantly logging in or losing sessions? GenAI-PoD streamlines session management, ensuring minimal friction when connecting to your web accounts.
++   Tired of constantly logging in or losing sessions? GenAI streamlines session management, ensuring minimal friction when connecting to your web accounts.
+ 
+ Disclaimer
+ ----------
+ 
+-By using GenAI-PoD, you acknowledge:
++By using GenAI, you acknowledge:
+ 
+ - **No Guarantees**: The software is provided “as is,” and the authors do not guarantee accuracy, reliability, or suitability for any specific purpose.
+ - **Platform Compliance**: Automated interactions may violate platform rules. Check each site’s policies and proceed responsibly.
+diff --git a/genai_pod/__init__.py b/genai/__init__.py
+similarity index 100%
+rename from genai_pod/__init__.py
+rename to genai/__init__.py
+diff --git a/genai_pod/aarch64_README.md b/genai/aarch64_README.md
+similarity index 100%
+rename from genai_pod/aarch64_README.md
+rename to genai/aarch64_README.md
+diff --git a/genai_pod/cli.py b/genai/cli.py
+similarity index 93%
+rename from genai_pod/cli.py
+rename to genai/cli.py
+index 6cd91cf..2782d43 100644
+--- a/genai_pod/cli.py
++++ b/genai/cli.py
+@@ -64,7 +64,7 @@ def generate(ctx: Context, output_directory: str) -> None:
+ @pass_context
+ def generategpt(ctx: Context, **kwargs: Any) -> None:
+     """Use GPT to generate images via Selenium."""
+-    from genai_pod.generators.generate_gpt import (
++    from genai.generators.generate_gpt import (
+         AbortScriptError,
+         generate_image_selenium_gpt,
+     )
+@@ -94,7 +94,7 @@ def upload(ctx: Context, **kwargs: Any) -> None:
+ @pass_context
+ def spreadshirt(ctx: Context, **kwargs: Any) -> None:
+     """Upload an image to Spreadshirt."""
+-    from genai_pod.uploaders.spreadshirt import upload_spreadshirt
++    from genai.uploaders.spreadshirt import upload_spreadshirt
+ 
+     ctx.obj |= kwargs
+     upload_spreadshirt(**ctx.obj)
+@@ -104,7 +104,7 @@ def spreadshirt(ctx: Context, **kwargs: Any) -> None:
+ @pass_context
+ def redbubble(ctx: Context, **kwargs: Any) -> None:
+     """Upload an image to Redbubble."""
+-    from genai_pod.uploaders.redbubble import upload_redbubble
++    from genai.uploaders.redbubble import upload_redbubble
+ 
+     ctx.obj |= kwargs
+     upload_redbubble(**ctx.obj)
+@@ -118,7 +118,7 @@ def redbubble(ctx: Context, **kwargs: Any) -> None:
+ )
+ def verifysite(profile_name: str) -> None:
+     """Verify an account in Chrome for capsolver, ChatGPT, or Spreadshirt/Redbubble."""
+-    from genai_pod.utilitys.verify_sites import verify
++    from genai.utilitys.verify_sites import verify
+ 
+     profile_to_site = {
+         "capsolver": "https://chromewebstore.google.com/detail/captcha-l%C3%B6ser-auto-hcaptc/"
+diff --git a/genai_pod/generators/generate_gpt.py b/genai/generators/generate_gpt.py
+similarity index 98%
+rename from genai_pod/generators/generate_gpt.py
+rename to genai/generators/generate_gpt.py
+index e5fbff3..1f7ae3c 100644
+--- a/genai_pod/generators/generate_gpt.py
++++ b/genai/generators/generate_gpt.py
+@@ -36,9 +36,9 @@ from selenium.webdriver.support import expected_conditions as ec
+ from selenium.webdriver.support.ui import WebDriverWait
+ from tqdm import tqdm
+ 
+-from genai_pod.utilitys.bg_remove import bg_remove
+-from genai_pod.utilitys.bigjpg_upscaler import upscale
+-from genai_pod.utils import clean_string, pilling_image, start_chrome, write_metadata
++from genai.utilitys.bg_remove import bg_remove
++from genai.utilitys.bigjpg_upscaler import upscale
++from genai.utils import clean_string, pilling_image, start_chrome, write_metadata
+ 
+ logging.basicConfig(level=logging.INFO)
+ active_drivers: list[WebDriver] = []
+@@ -529,9 +529,7 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
+ 
+         # loading forbidden words
+         forbidden_words_path = (
+-            Path(__file__).parent.absolute().parent
+-            / "resources"
+-            / "vexel_forbidden_words.json"
++            Path("genai") / "resources" / "vexel_forbidden_words.json"
+         )
+         if not forbidden_words_path.exists():
+             logging.error("Forbidden words JSON file not found.")
+@@ -617,7 +615,12 @@ def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -
+     :type image_file_path: str
+     :raises AbortScriptError: If any step in the generation process fails.
+     """
++    import time
++
+     driver.set_page_load_timeout(30)
++    # time.sleep(10) waits for JavaScript to decide if the GPT model allows file uploads.
++    # Without this wait, the image might be sent too early before uploads are allowed.
++    time.sleep(10)
+ 
+     # Uploading image
+     try:
+diff --git a/genai_pod/resources/forbidden_words.json b/genai/resources/forbidden_words.json
+similarity index 100%
+rename from genai_pod/resources/forbidden_words.json
+rename to genai/resources/forbidden_words.json
+diff --git a/genai_pod/resources/scaling_adjustments.json b/genai/resources/scaling_adjustments.json
+similarity index 100%
+rename from genai_pod/resources/scaling_adjustments.json
+rename to genai/resources/scaling_adjustments.json
+diff --git a/genai_pod/resources/vexel_forbidden_words.json b/genai/resources/vexel_forbidden_words.json
+similarity index 100%
+rename from genai_pod/resources/vexel_forbidden_words.json
+rename to genai/resources/vexel_forbidden_words.json
+diff --git a/genai_pod/generators/__init__.py b/genai/uploaders/__init__.py
+similarity index 100%
+rename from genai_pod/generators/__init__.py
+rename to genai/uploaders/__init__.py
+diff --git a/genai_pod/uploaders/redbubble.py b/genai/uploaders/redbubble.py
+similarity index 98%
+rename from genai_pod/uploaders/redbubble.py
+rename to genai/uploaders/redbubble.py
+index 25b28d0..8251d66 100644
+--- a/genai_pod/uploaders/redbubble.py
++++ b/genai/uploaders/redbubble.py
+@@ -42,7 +42,7 @@ from selenium.webdriver.common.keys import Keys
+ from seleniumbase import SB  # type: ignore[import]
+ from tqdm import tqdm
+ 
+-from genai_pod.utils import chromedata
++from genai.utils import chromedata
+ 
+ logging.basicConfig(level=logging.INFO)
+ 
+@@ -181,11 +181,11 @@ def _close_overlays(sb: SB) -> None:
+         logging.info("Can't click on button[aria-label='Close'")
+ 
+ 
+-def _load_config(filename: str | Path) -> dict:
++def _load_config(filename: str) -> dict:
+     """Load configuration settings from a JSON file.
+ 
+     :param filename: The path to the JSON configuration file.
+-    :type filename: str | Path
++    :type filename: str
+     :return: The loaded configuration, which can be a dictionary or a list
+     :rtype: dict | list
+     """
+@@ -204,11 +204,7 @@ def _setup_clothes(sb: SB, base_scaling: str) -> None:
+                          used to select scaling adjustments.
+     :type base_scaling: str
+     """
+-    scaling_adjustments = _load_config(
+-        Path(__file__).parent.absolute().parent
+-        / "resources"
+-        / "scaling_adjustments.json"
+-    )
++    scaling_adjustments = _load_config("genai/resources/scaling_adjustments.json")
+ 
+     if base_scaling in scaling_adjustments:
+         product_adjustments = scaling_adjustments[base_scaling]
+diff --git a/genai_pod/uploaders/spreadshirt.py b/genai/uploaders/spreadshirt.py
+similarity index 99%
+rename from genai_pod/uploaders/spreadshirt.py
+rename to genai/uploaders/spreadshirt.py
+index f6b4753..a2d9291 100644
+--- a/genai_pod/uploaders/spreadshirt.py
++++ b/genai/uploaders/spreadshirt.py
+@@ -36,7 +36,7 @@ from selenium.webdriver.common.keys import Keys
+ from selenium.webdriver.support import expected_conditions as ec
+ from selenium.webdriver.support.ui import WebDriverWait
+ 
+-from genai_pod.utils import UploadConfig, iterate_and_upload, start_chrome
++from genai.utils import UploadConfig, iterate_and_upload, start_chrome
+ 
+ 
+ def upload_spreadshirt(upload_path: str) -> None:
+diff --git a/genai_pod/utilitys/bg_remove.py b/genai/utilitys/bg_remove.py
+similarity index 98%
+rename from genai_pod/utilitys/bg_remove.py
+rename to genai/utilitys/bg_remove.py
+index 126003f..32bb869 100644
+--- a/genai_pod/utilitys/bg_remove.py
++++ b/genai/utilitys/bg_remove.py
+@@ -38,7 +38,7 @@ from selenium.webdriver.common.by import By
+ from selenium.webdriver.support import expected_conditions as ec
+ from selenium.webdriver.support.ui import WebDriverWait
+ 
+-from genai_pod.utils import start_chrome
++from genai.utils import start_chrome
+ 
+ logging.basicConfig(level=logging.INFO)
+ 
+@@ -146,7 +146,7 @@ def run_bg_remove(image_path: str) -> Path:
+         try:
+             WebDriverWait(driver, 80).until(
+                 ec.presence_of_element_located((By.CSS_SELECTOR, "input[type='file']")),
+-            ).send_keys(str(image_path))
++            ).send_keys(str(Path(image_path).resolve()))
+         except Exception as e:
+             _error_capsolver(driver)
+             raise AbortScriptError("input[type='file'] failed") from e
+diff --git a/genai_pod/utilitys/bigjpg_upscaler.py b/genai/utilitys/bigjpg_upscaler.py
+similarity index 100%
+rename from genai_pod/utilitys/bigjpg_upscaler.py
+rename to genai/utilitys/bigjpg_upscaler.py
+diff --git a/genai_pod/utilitys/verify_sites.py b/genai/utilitys/verify_sites.py
+similarity index 96%
+rename from genai_pod/utilitys/verify_sites.py
+rename to genai/utilitys/verify_sites.py
+index e70aca5..d1f8304 100644
+--- a/genai_pod/utilitys/verify_sites.py
++++ b/genai/utilitys/verify_sites.py
+@@ -19,7 +19,7 @@ profile management for automated web interactions.
+ import logging
+ from pathlib import Path
+ 
+-from genai_pod.utils import save_cookies, start_chrome
++from genai.utils import save_cookies, start_chrome
+ 
+ 
+ def verify(profile_name: str, site: str) -> None:
+diff --git a/genai_pod/utils.py b/genai/utils.py
+similarity index 99%
+rename from genai_pod/utils.py
+rename to genai/utils.py
+index e36df68..c4fa0b3 100644
+--- a/genai_pod/utils.py
++++ b/genai/utils.py
+@@ -66,9 +66,7 @@ def start_chrome(chrome_profile: str, output_directory: Path | None) -> uc.Chrom
+     :return: An instance of the undetected_chromedriver Chrome WebDriver.
+     :rtype: uc.Chrome
+     """
+-    from genai_pod.utilitys.bg_remove import (  # pylint: disable=cyclic-import
+-        AbortScriptError,
+-    )
++    from genai.utilitys.bg_remove import AbortScriptError
+ 
+     user_data_dir = Path("chromedata").resolve()
+ 
+diff --git a/genai_pod/uploaders/__init__.py b/genai_pod/uploaders/__init__.py
+deleted file mode 100644
+index ebf86d0..0000000
+--- a/genai_pod/uploaders/__init__.py
++++ /dev/null
+@@ -1,5 +0,0 @@
+-# -*- coding: utf-8 -*-
+-# Copyright (C) 2024
+-# Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
+-# Leonhard Thomas Schwertfeger https://github.com/LeonhardSchwertfeger
+-#
+diff --git a/genai_pod/utilitys/__init__.py b/genai_pod/utilitys/__init__.py
+deleted file mode 100644
+index ebf86d0..0000000
+--- a/genai_pod/utilitys/__init__.py
++++ /dev/null
+@@ -1,5 +0,0 @@
+-# -*- coding: utf-8 -*-
+-# Copyright (C) 2024
+-# Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
+-# Leonhard Thomas Schwertfeger https://github.com/LeonhardSchwertfeger
+-#
+diff --git a/pyproject.toml b/pyproject.toml
+index b76751d..8daa803 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -9,7 +9,7 @@ requires = ["setuptools>=65.5.1", "setuptools_scm[toml]>=6.2", "wheel"]
+ build-backend = "setuptools.build_meta"
+ 
+ [project]
+-name = "genai-pod"
++name = "genai"
+ keywords = [
+     "Spreadshirt",
+     "Redbubble",
+@@ -56,11 +56,11 @@ dependencies = [
+ ]
+ 
+ [project.scripts]
+-genai = "genai_pod.cli:cli"
++genai = "genai.cli:cli"
+ 
+ [project.urls]
+-"Homepage" = "https://github.com/LeonhardSchwertfeger/genai-pod"
+-"Bug Tracker" = "https://github.com/LeonhardSchwertfeger/genai-pod/issues"
++"Homepage" = "https://github.com/LeonhardSchwertfeger/genai"
++"Bug Tracker" = "https://github.com/LeonhardSchwertfeger/genai/issues"
+ 
+ [project.optional-dependencies]
+ dev = [
+@@ -72,7 +72,7 @@ dev = [
+     # Typing
+     "mypy",
+     # dev
+-    "ipykernel", # python3 -m ipykernel install --user --name=genai_pod
++    "ipykernel", # python3 -m ipykernel install --user --name=genai
+     # documentation
+     "sphinx",
+     "sphinx-click",
+@@ -86,10 +86,10 @@ test = ["pytest", "pytest-cov"]
+ include-package-data = false
+ 
+ [tool.setuptools.packages.find]
+-include = ["genai_pod*"]
++include = ["genai*"]
+ 
+ [tool.setuptools_scm]
+-write_to = "genai_pod/_version.py"
++write_to = "genai/_version.py"
+ version_scheme = "guess-next-dev"
+ local_scheme = "no-local-version"
+ 
+@@ -104,7 +104,7 @@ cache_dir = ".cache/pytest"
+ markers = ["wip: Used to run a specific test by hand."]
+ 
+ [tool.coverage.run]
+-source = ["genai_pod"]
++source = ["genai"]
+ omit = ["*tests*"]
+ 
+ [tool.coverage.report]
+@@ -118,7 +118,7 @@ skip_empty = true
+ lint.select = ["A", "B", "C4", "E", "F", "I", "N", "RET", "S", "SIM", "TID"]
+ 
+ respect-gitignore = true
+-exclude = ["scripts/*.py", "genai_pod/impulse/*"]
++exclude = ["scripts/*.py", "genai/impulse/*"]
+ 
+ line-length = 100
+ cache-dir = ".cache/ruff"
+diff --git a/tests/test_cli.py b/tests/test_cli.py
+index 4a51282..7766adc 100644
+--- a/tests/test_cli.py
++++ b/tests/test_cli.py
+@@ -6,10 +6,10 @@
+ 
+ from unittest.mock import patch
+ 
+-from genai_pod.cli import cli
++from genai.cli import cli
+ 
+ 
+-@patch("genai_pod.generators.generate_gpt.generate_image_selenium_gpt")
++@patch("genai.generators.generate_gpt.generate_image_selenium_gpt")
+ def test_cli_generate_generategpt_success(mock_generate, runner):
+     mock_generate.side_effect = SystemExit(0)
+     result = runner.invoke(
+@@ -19,7 +19,7 @@ def test_cli_generate_generategpt_success(mock_generate, runner):
+     mock_generate.assert_called_once_with(output_directory="/path/to/output")
+ 
+ 
+-@patch("genai_pod.generators.generate_gpt.generate_image_selenium_gpt")
++@patch("genai.generators.generate_gpt.generate_image_selenium_gpt")
+ def test_cli_generate_generategpt_exception(mock_generate, runner):
+     mock_generate.side_effect = Exception("Test Exception")
+     result = runner.invoke(
+@@ -31,7 +31,7 @@ def test_cli_generate_generategpt_exception(mock_generate, runner):
+     assert str(result.exception) == "Test Exception"
+ 
+ 
+-@patch("genai_pod.uploaders.spreadshirt.upload_spreadshirt")
++@patch("genai.uploaders.spreadshirt.upload_spreadshirt")
+ def test_cli_upload_spreadshirt_success(mock_upload, runner):
+     mock_upload.return_value = None
+     result = runner.invoke(
+@@ -41,7 +41,7 @@ def test_cli_upload_spreadshirt_success(mock_upload, runner):
+     mock_upload.assert_called_once_with(upload_path="/path/to/uploads")
+ 
+ 
+-@patch("genai_pod.uploaders.redbubble.upload_redbubble")
++@patch("genai.uploaders.redbubble.upload_redbubble")
+ def test_cli_upload_redbubble_success(mock_upload, runner):
+     mock_upload.return_value = None
+     result = runner.invoke(
+@@ -51,7 +51,7 @@ def test_cli_upload_redbubble_success(mock_upload, runner):
+     mock_upload.assert_called_once_with(upload_path="/path/to/uploads")
+ 
+ 
+-@patch("genai_pod.utilitys.verify_sites.verify")
++@patch("genai.utilitys.verify_sites.verify")
+ def test_cli_verifysite_capsolver_success(mock_start_chrome, runner):
+     mock_start_chrome.return_value = None
+     result = runner.invoke(cli, ["verifysite", "capsolver"])

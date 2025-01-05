@@ -66,9 +66,7 @@ def start_chrome(chrome_profile: str, output_directory: Path | None) -> uc.Chrom
     :return: An instance of the undetected_chromedriver Chrome WebDriver.
     :rtype: uc.Chrome
     """
-    from genai_pod.utilitys.bg_remove import (  # pylint: disable=cyclic-import
-        AbortScriptError,
-    )
+    from genai.utilitys.bg_remove import AbortScriptError
 
     user_data_dir = Path("chromedata").resolve()
 

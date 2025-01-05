@@ -9,7 +9,7 @@ requires = ["setuptools>=65.5.1", "setuptools_scm[toml]>=6.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "genai-pod"
+name = "genai"
 keywords = [
     "Spreadshirt",
     "Redbubble",
@@ -56,11 +56,11 @@ dependencies = [
 ]
 
 [project.scripts]
-genai = "genai_pod.cli:cli"
+genai = "genai.cli:cli"
 
 [project.urls]
-"Homepage" = "https://github.com/LeonhardSchwertfeger/genai-pod"
-"Bug Tracker" = "https://github.com/LeonhardSchwertfeger/genai-pod/issues"
+"Homepage" = "https://github.com/LeonhardSchwertfeger/genai"
+"Bug Tracker" = "https://github.com/LeonhardSchwertfeger/genai/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -72,7 +72,7 @@ dev = [
     # Typing
     "mypy",
     # dev
-    "ipykernel", # python3 -m ipykernel install --user --name=genai_pod
+    "ipykernel", # python3 -m ipykernel install --user --name=genai
     # documentation
     "sphinx",
     "sphinx-click",
@@ -86,10 +86,10 @@ test = ["pytest", "pytest-cov"]
 include-package-data = false
 
 [tool.setuptools.packages.find]
-include = ["genai_pod*"]
+include = ["genai*"]
 
 [tool.setuptools_scm]
-write_to = "genai_pod/_version.py"
+write_to = "genai/_version.py"
 version_scheme = "guess-next-dev"
 local_scheme = "no-local-version"
 
@@ -104,7 +104,7 @@ cache_dir = ".cache/pytest"
 markers = ["wip: Used to run a specific test by hand."]
 
 [tool.coverage.run]
-source = ["genai_pod"]
+source = ["genai"]
 omit = ["*tests*"]
 
 [tool.coverage.report]
@@ -118,7 +118,7 @@ skip_empty = true
 lint.select = ["A", "B", "C4", "E", "F", "I", "N", "RET", "S", "SIM", "TID"]
 
 respect-gitignore = true
-exclude = ["scripts/*.py", "genai_pod/impulse/*"]
+exclude = ["scripts/*.py", "genai/impulse/*"]
 
 line-length = 100
 cache-dir = ".cache/ruff"

@@ -36,9 +36,9 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
 
-from genai_pod.utilitys.bg_remove import bg_remove
-from genai_pod.utilitys.bigjpg_upscaler import upscale
-from genai_pod.utils import clean_string, pilling_image, start_chrome, write_metadata
+from genai.utilitys.bg_remove import bg_remove
+from genai.utilitys.bigjpg_upscaler import upscale
+from genai.utils import clean_string, pilling_image, start_chrome, write_metadata
 
 logging.basicConfig(level=logging.INFO)
 active_drivers: list[WebDriver] = []
@@ -529,9 +529,7 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
 
         # loading forbidden words
         forbidden_words_path = (
-            Path(__file__).parent.absolute().parent
-            / "resources"
-            / "vexel_forbidden_words.json"
+            Path("genai") / "resources" / "vexel_forbidden_words.json"
         )
         if not forbidden_words_path.exists():
             logging.error("Forbidden words JSON file not found.")
@@ -617,7 +615,12 @@ def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -
     :type image_file_path: str
     :raises AbortScriptError: If any step in the generation process fails.
     """
+    import time
+
     driver.set_page_load_timeout(30)
+    # time.sleep(10) waits for JavaScript to decide if the GPT model allows file uploads.
+    # Without this wait, the image might be sent too early before uploads are allowed.
+    time.sleep(10)
 
     # Uploading image
     try:

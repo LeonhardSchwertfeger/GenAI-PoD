@@ -72,13 +72,13 @@ ruff-fix:
 .PHONY: clean
 clean:
 	rm -rf .cache \
-		build/ dist/ genai_pod.egg-info \
+		build/ dist/ genai.egg-info \
 		.ipynb_checkpoints
 
 	rm -f .coverage cmethods/_version.py
 
 	find tests -name "__pycache__" | xargs rm -rf
-	find genai_pod -name "__pycache__" | xargs rm -rf
+	find genai -name "__pycache__" | xargs rm -rf
 
 
 # Build the documentation

@@ -6,7 +6,7 @@
 
 """Configuration file for the Sphinx documentation builder.
 
-This module configures Sphinx to generate documentation for the GenAI-PoD project.
+This module configures Sphinx to generate documentation for the GenAI project.
 
 """
 
@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "GenAI-PoD"  # pylint: disable=invalid-name
+project = "GenAI"  # pylint: disable=invalid-name
 
 copyright = (  # noqa: A001 # pylint: disable=redefined-builtin, invalid-name
     "2024, Leonhard Thomas Schwertfeger and Benjamin Thomas Schwertfeger"
@@ -57,7 +57,7 @@ html_theme = "sphinx_rtd_theme"  # pylint: disable=invalid-name
 html_context = {
     "display_github": True,
     "github_user": "LeonhardSchwertfeger",
-    "github_repo": "GenAI-PoD",
+    "github_repo": "genai",
     "github_version": "master/docs/",
 }
 html_theme_options = {

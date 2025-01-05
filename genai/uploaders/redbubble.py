@@ -42,7 +42,7 @@ from selenium.webdriver.common.keys import Keys
 from seleniumbase import SB  # type: ignore[import]
 from tqdm import tqdm
 
-from genai_pod.utils import chromedata
+from genai.utils import chromedata
 
 logging.basicConfig(level=logging.INFO)
 
@@ -181,11 +181,11 @@ def _close_overlays(sb: SB) -> None:
         logging.info("Can't click on button[aria-label='Close'")
 
 
-def _load_config(filename: str | Path) -> dict:
+def _load_config(filename: str) -> dict:
     """Load configuration settings from a JSON file.
 
     :param filename: The path to the JSON configuration file.
-    :type filename: str | Path
+    :type filename: str
     :return: The loaded configuration, which can be a dictionary or a list
     :rtype: dict | list
     """
@@ -204,11 +204,7 @@ def _setup_clothes(sb: SB, base_scaling: str) -> None:
                          used to select scaling adjustments.
     :type base_scaling: str
     """
-    scaling_adjustments = _load_config(
-        Path(__file__).parent.absolute().parent
-        / "resources"
-        / "scaling_adjustments.json"
-    )
+    scaling_adjustments = _load_config("genai/resources/scaling_adjustments.json")
 
     if base_scaling in scaling_adjustments:
         product_adjustments = scaling_adjustments[base_scaling]
