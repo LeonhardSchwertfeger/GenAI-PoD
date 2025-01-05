@@ -146,7 +146,7 @@ def run_bg_remove(image_path: str) -> Path:
         try:
             WebDriverWait(driver, 80).until(
                 ec.presence_of_element_located((By.CSS_SELECTOR, "input[type='file']")),
-            ).send_keys(str(image_path))
+            ).send_keys(str(Path(image_path).resolve()))
         except Exception as e:
             _error_capsolver(driver)
             raise AbortScriptError("input[type='file'] failed") from e
