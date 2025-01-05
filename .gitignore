@@ -63,7 +63,7 @@ dmypy.json
 .png
 images/
 .DS_Store
-genai/_version.py
+genai_pod/_version.py
 
 # chromedata
 chromedata

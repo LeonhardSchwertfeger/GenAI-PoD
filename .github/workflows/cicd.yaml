@@ -11,7 +11,7 @@ on:
     branches:
       - "**"
   schedule:
-    - cron: "20 16 * * 0"
+    - cron: "20 15 * * 0"
   release:
     types: [created]
 
@@ -58,3 +58,35 @@ jobs:
     with:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
+
+  ##    Uploads the package to test.pypi.org on master if triggered by
+  ##    a regular commit/push.
+  ##
+  UploadTestPyPI:
+    if: |
+      (success() && github.ref == 'refs/heads/master')
+      && (github.event_name == 'push' || github.event_name == 'release')
+    needs:
+      - Build
+      - Build-Doc
+      - Test
+    name: Upload development version to Test PyPI
+    uses: ./.github/workflows/_pypi_test_publish.yaml
+    secrets:
+      API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+  ##    Upload genai to PyPI
+  ##
+  UploadPyPI:
+    if: |
+      success()
+      && github.actor == 'LeonhardSchwertfeger'
+      && github.event_name == 'release'
+    needs:
+      - Build
+      - Build-Doc
+      - Test
+    name: Upload release to PyPI
+    uses: ./.github/workflows/_pypi_publish.yaml
+    secrets:
+      API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
