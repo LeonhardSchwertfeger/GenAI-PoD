@@ -64,7 +64,7 @@ jobs:
   ##
   UploadTestPyPI:
     if: |
-      (success() && github.ref == 'refs/heads/master')
+      (success() && github.ref == 'refs/heads/master' && github.actor == 'LeonhardSchwertfeger')
       && (github.event_name == 'push' || github.event_name == 'release')
     needs:
       - Build
