@@ -36,9 +36,9 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
 
-from genai.utilitys.bg_remove import bg_remove
-from genai.utilitys.bigjpg_upscaler import upscale
-from genai.utils import clean_string, pilling_image, start_chrome, write_metadata
+from genai_pod.utilitys.bg_remove import bg_remove
+from genai_pod.utilitys.bigjpg_upscaler import upscale
+from genai_pod.utils import clean_string, pilling_image, start_chrome, write_metadata
 
 logging.basicConfig(level=logging.INFO)
 active_drivers: list[WebDriver] = []

@@ -96,7 +96,7 @@ repos:
           - --config-file=pyproject.toml
           - --install-types
           - --non-interactive
-          - genai
+          - genai_pod
   - repo: https://github.com/psf/black
     rev: 24.10.0
     hooks:

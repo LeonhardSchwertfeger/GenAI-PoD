@@ -42,7 +42,7 @@ from selenium.webdriver.common.keys import Keys
 from seleniumbase import SB  # type: ignore[import]
 from tqdm import tqdm
 
-from genai.utils import chromedata
+from genai_pod.utils import chromedata
 
 logging.basicConfig(level=logging.INFO)
 
@@ -185,7 +185,7 @@ def _load_config(filename: str | Path) -> dict:
     """Load configuration settings from a JSON file.
 
     :param filename: The path to the JSON configuration file.
-    :type filename: str
+    :type filename: str | Path
     :return: The loaded configuration, which can be a dictionary or a list
     :rtype: dict | list
     """

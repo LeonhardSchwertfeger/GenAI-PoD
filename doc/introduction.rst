@@ -6,13 +6,13 @@
 Introduction
 ============
 
-Welcome to **GenAI** — your command-line tool that streamlines the process of generating and preparing images via **ChatGPT** automation. Designed with **print-on-demand (POD)** workflows in mind, GenAI can further handle background removal, upscaling, and uploading designs to popular shops like **Spreadshirt** and **Redbubble**.
+Welcome to **GenAI-PoD** — your command-line tool that streamlines the process of generating and preparing images via **ChatGPT** automation. Designed with **print-on-demand (POD)** workflows in mind, GenAI-PoD can further handle background removal, upscaling, and uploading designs to popular shops like **Spreadshirt** and **Redbubble**.
 
 .. note::
    This project is **unofficial** and not endorsed by OpenAI, Spreadshirt, Redbubble, or any related entities.
    Always check each platform’s Terms of Service before using automated tools.
 
-Why GenAI?
+Why GenAI-PoD?
 ----------
 
 1. **Automated Image Generation**
@@ -25,19 +25,19 @@ Why GenAI?
    Seamlessly upscale your images with `bigjpg.com <https://bigjpg.com/>`_. Perfect for achieving high-resolution outputs for merchandise.
 
 4. **Automatic Uploads**
-   Eliminate tedious uploading steps. GenAI directly interacts with your **Spreadshirt** or **Redbubble** account:
+   Eliminate tedious uploading steps. GenAI-PoD directly interacts with your **Spreadshirt** or **Redbubble** account:
    - Navigates to upload pages
    - Fills out metadata like titles, descriptions, and tags
    - Publishes your design
    All via preconfigured Selenium routines.
 
 5. **Account Verification**
-   Tired of constantly logging in or losing sessions? GenAI streamlines session management, ensuring minimal friction when connecting to your web accounts.
+   Tired of constantly logging in or losing sessions? GenAI-PoD streamlines session management, ensuring minimal friction when connecting to your web accounts.
 
 Disclaimer
 ----------
 
-By using GenAI, you acknowledge:
+By using GenAI-PoD, you acknowledge:
 
 - **No Guarantees**: The software is provided “as is,” and the authors do not guarantee accuracy, reliability, or suitability for any specific purpose.
 - **Platform Compliance**: Automated interactions may violate platform rules. Check each site’s policies and proceed responsibly.
