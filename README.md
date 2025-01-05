@@ -10,11 +10,11 @@ GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE)
 [![Generic
 badge](https://img.shields.io/badge/python-3.11+-blue.svg)](https://shields.io/)
 
-[![CI/CD](https://github.com/leonhardschwertfeger/genai/actions/workflows/cicd.yaml/badge.svg?branch=master)](https://github.com/leonhardschwertfeger/genai/actions/workflows/cicd.yaml)
+[![CI/CD](https://github.com/leonhardschwertfeger/genai-pod/actions/workflows/cicd.yaml/badge.svg?branch=master)](https://github.com/leonhardschwertfeger/genai-pod/actions/workflows/cicd.yaml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Typing](https://img.shields.io/badge/typing-mypy-informational)](https://mypy-lang.org/)
 
-[![release](https://shields.io/github/release-date/leonhardschwertfeger/genai)](https://github.com/leonhardschwertfeger/genai/releases)
+[![release](https://shields.io/github/release-date/leonhardschwertfeger/genai-pod)](https://github.com/leonhardschwertfeger/genai-pod/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14569412.svg)](https://doi.org/10.5281/zenodo.14569412)
 
 </div>
@@ -91,7 +91,7 @@ popular print-on-demand (POD) platforms such as **Spreadshirt** and
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/LeonhardSchwertfeger/genai.git
+   git clone https://github.com/LeonhardSchwertfeger/genai-pod.git
    ```
 
 2. **Create a Virtual Environment (Recommended)**

@@ -101,6 +101,6 @@ Commands
 
 Below is the detailed usage of each command and its options.
 
-.. click:: genai.cli:cli
+.. click:: genai_pod.cli:cli
    :prog: genai
    :nested: full

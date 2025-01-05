@@ -529,7 +529,9 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
 
         # loading forbidden words
         forbidden_words_path = (
-            Path("genai") / "resources" / "vexel_forbidden_words.json"
+            Path(__file__).parent.absolute().parent
+            / "resources"
+            / "vexel_forbidden_words.json"
         )
         if not forbidden_words_path.exists():
             logging.error("Forbidden words JSON file not found.")
