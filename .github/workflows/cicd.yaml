@@ -59,21 +59,21 @@ jobs:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
 
-  ##    Uploads the package to test.pypi.org on master if triggered by
-  ##    a regular commit/push.
-  ##
-  UploadTestPyPI:
-    if: |
-      (success() && github.ref == 'refs/heads/master' && github.actor == 'LeonhardSchwertfeger')
-      && (github.event_name == 'push' || github.event_name == 'release')
-    needs:
-      - Build
-      - Build-Doc
-      - Test
-    name: Upload development version to Test PyPI
-    uses: ./.github/workflows/_pypi_test_publish.yaml
-    secrets:
-      API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+  # ##    Uploads the package to test.pypi.org on master if triggered by
+  # ##    a regular commit/push.
+  # ##
+  # UploadTestPyPI:
+  #   if: |
+  #     (success() && github.ref == 'refs/heads/master')
+  #     && (github.event_name == 'push' || github.event_name == 'release')
+  #   needs:
+  #     - Build
+  #     - Build-Doc
+  #     - Test
+  #   name: Upload development version to Test PyPI
+  #   uses: ./.github/workflows/_pypi_test_publish.yaml
+  #   secrets:
+  #     API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
 
   ##    Upload genai to PyPI
   ##
