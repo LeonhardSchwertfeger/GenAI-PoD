@@ -38,7 +38,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
-from genai.utils import start_chrome
+from genai_pod.utils import start_chrome
 
 logging.basicConfig(level=logging.INFO)
 
