@@ -28,7 +28,11 @@ import undetected_chromedriver as uc  # type: ignore[import]
 from PIL import Image
 from pytz import timezone
 from requests import get
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    TimeoutException,
+    WebDriverException,
+)
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -71,23 +75,6 @@ def _start_chat_gpt() -> uc.Chrome:
 
     logging.info("Logged in! (:")
     return driver
-
-
-def _find_element(driver: uc.Chrome, xpath: str) -> WebElement | None:
-    """Find an element by its XPath.
-
-    :param driver: The Selenium WebDriver instance.
-    :type driver: uc.Chrome
-    :param xpath: The XPath of the element to find.
-    :type xpath: str
-    :return: The found WebElement or None if not found.
-    :rtype: WebElement | None
-    """
-    try:
-        return driver.find_element(By.XPATH, xpath)
-    except NoSuchElementException:
-        logging.error("Element '%s' is not found.", xpath)
-        return None
 
 
 def _is_element_present(driver: uc.Chrome, xpath: str) -> bool:
@@ -498,11 +485,7 @@ class AbortScriptError(Exception):
         super().__init__(message)
 
     def close_all_drivers(self) -> None:
-        """Closes all active drivers.
-
-        :return: None
-        :rtype: None
-        """
+        """Closes all active drivers."""
         global active_drivers  # pylint: disable=W0603
         for driver in active_drivers:
             driver.quit()
@@ -518,16 +501,16 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
     :rtype: str | None
     :raises AbortScriptError: If scraping fails.
     """
+
     try:
         driver.set_page_load_timeout(60)
-        driver.get(f"https://de.vexels.com/nischen/lustig/{randbelow(30) + 1}/")
+        driver.get(f"https://de.vexels.com/nischen/funny/{randbelow(30) + 1}/")
         active_drivers.append(driver)
 
-        WebDriverWait(driver, 30).until(
+        WebDriverWait(driver, 60).until(
             ec.presence_of_all_elements_located((By.CLASS_NAME, "vx-grid-asset"))
         )
 
-        # loading forbidden words
         forbidden_words_path = (
             Path(__file__).parent.absolute().parent
             / "resources"
@@ -552,7 +535,6 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
                     By.CSS_SELECTOR, ".vx-grid-asset-container.d-block.h-100"
                 )
 
-                # finding title container
                 img_title_element = container.find_element(
                     By.CSS_SELECTOR, ".title-container h3.text"
                 )
@@ -565,12 +547,11 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
                     logging.warning("Image title is empty")
                     continue
 
-                # Check for forbidden words
+                # Checking for forbidden words
                 if any(word in img_title.lower() for word in forbidden_words_list):
                     logging.info("Forbidden word found in title, retrying...")
                     continue
 
-                # find image
                 img_element = container.find_element(
                     By.CSS_SELECTOR, ".vx-grid-figure img.vx-grid-thumb"
                 )
@@ -588,12 +569,15 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
                 # saving image in tempfile
                 with NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
                     Image.open(BytesIO(response.content)).save(temp_file, format="PNG")
-                    driver.quit()
                     return temp_file.name
 
-            except Exception as e:
-                driver.quit()
-                logging.error(
+            except WebDriverException as e:
+                if "disconnected" in str(e):
+                    logging.warning("WebDriver disconnected. Restarting driver...")
+                    driver.quit()
+                    driver = uc.Chrome()
+                    continue
+                logging.warning(
                     "Error processing asset on attempt %d: %s", attempt + 1, str(e)
                 )
                 continue
@@ -604,6 +588,10 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
     except Exception as e:
         logging.error("Error in _scrape_vexels_image: %s", str(e))
         return None
+
+    finally:
+        if driver:
+            driver.quit()
 
 
 def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -> None:
@@ -738,8 +726,9 @@ def generate_image_selenium_gpt(**kwargs: dict[str, Any]) -> None:
             image_file_path = _scrape_vexels_image(driver)
             if image_file_path is None:
                 raise AbortScriptError("Error scraping the image from vexels.com")
-            driver.quit()
-            active_drivers.remove(driver)
+            if driver:
+                driver.quit()
+                active_drivers.remove(driver)
 
             logging.info("Starting ChatGPT session and generating image.")
             chatgpt_driver = _start_chat_gpt()

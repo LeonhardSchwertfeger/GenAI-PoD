@@ -62,11 +62,7 @@ class AbortScriptError(Exception):
         self.driver = driver
 
     def close_driver(self) -> None:
-        """Close the Selenium WebDriver instance if present.
-
-        :return: None
-        :rtype: None
-        """
+        """Close the Selenium WebDriver instance if present."""
         if self.driver:
             self.driver.quit()
 
@@ -76,8 +72,6 @@ def _error_capsolver(driver: uc.Chrome) -> None:
 
     :param driver: The Selenium WebDriver instance.
     :type driver: uc.Chrome
-    :return: None
-    :rtype: None
     """
     try:
         if WebDriverWait(driver, 10).until(

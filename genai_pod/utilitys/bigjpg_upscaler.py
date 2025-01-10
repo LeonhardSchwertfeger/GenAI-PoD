@@ -35,24 +35,61 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from tqdm import tqdm
-from webdriver_manager.chrome import ChromeDriverManager  # type: ignore[import]
 
 
 def start_tor() -> subprocess.Popen:
-    """Start the Tor service by calling the Tor executable.
+    """Starts the Tor service by calling the Tor executable.
 
     :return: The process object representing the running Tor service.
     :rtype: subprocess.Popen
     """
-    logging.info("Starting Tor service...")
-    tor_executable = which("tor")
-    if not tor_executable:
-        raise FileNotFoundError("Tor executable not found in PATH.")
+    import platform
+
+    # aarch64 has an unofficial tor-binary.
+    # I recommend the tor binary from
+    # https://sourceforge.net/projects/tor-browser-ports/files/13.0.9/
+    tor_exec = which("tor") if platform.machine().lower() != "aarch64" else "./tor"
+
+    if not tor_exec:
+        raise FileNotFoundError("Tor-Binary not found!")
     return subprocess.Popen(  # noqa: S603
-        [tor_executable],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        [tor_exec], stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
+
+
+def wait_for_tor(timeout: int = 60) -> None:
+    """
+    Test the session with get request with SOCKS5-Proxy on https://check.torproject.org.
+    :param timeout: the time till timeout
+    :type timeout: int
+    """
+    import requests
+
+    logging.info("Waiting till connected...")
+
+    start_time = time()
+    session = requests.Session()
+    session.proxies = {
+        "http": "socks5h://127.0.0.1:9050",
+        "https": "socks5h://127.0.0.1:9050",
+    }
+    while True:
+        try:
+            r = session.get("https://check.torproject.org", timeout=10)
+            if (
+                r.status_code == 200
+                and "This browser is configured to use Tor" in r.text
+            ):
+                logging.info("Tor is now available!")
+                return
+        except Exception as e:
+            logging.error("Error while waiting for Tor %s", e)
+
+        if time() - start_time > timeout:
+            raise TimeoutError("Tor not connected (Timeout).")
+
+        # Checks every 2 seconds
+        sleep(2)
 
 
 def stop_tor(tor_process: subprocess.Popen) -> None:
@@ -60,8 +97,6 @@ def stop_tor(tor_process: subprocess.Popen) -> None:
 
     :param tor_process: The process object representing the Tor service.
     :type tor_process: subprocess.Popen
-    :return: None
-    :rtype: None
     """
     logging.info("Stopping Tor service...")
     tor_process.terminate()
@@ -89,10 +124,8 @@ def setup_driver() -> webdriver.Chrome:
     chrome_options.add_argument("--no-sandbox")
     chrome_options.page_load_strategy = "eager"
 
-    chromedriver_path = Path(ChromeDriverManager().install())
-    logging.info("chromedriver_path %s,", chromedriver_path)
     driver = webdriver.Chrome(
-        service=Service(chromedriver_path),
+        service=Service(which("chromedriver")),
         options=chrome_options,
     )
     driver.maximize_window()
@@ -170,16 +203,16 @@ def upload_image(driver: webdriver.Chrome, image_path: str) -> None:
     :type driver: webdriver.Chrome
     :param image_path: The path to the image to upload.
     :type image_path: str
-    :return: None
-    :rtype: None
     """
+    import os
+
     driver.execute_script(
         """
         const input = document.getElementById('fileupload');
         input.style.display = 'block';
     """,
     )
-    driver.find_element(By.ID, "fileupload").send_keys(str(image_path))
+    driver.find_element(By.ID, "fileupload").send_keys(os.path.abspath(image_path))
 
 
 def initiate_upscaling(driver: webdriver.Chrome) -> None:
@@ -189,8 +222,6 @@ def initiate_upscaling(driver: webdriver.Chrome) -> None:
 
     :param driver: The Selenium WebDriver instance.
     :type driver: webdriver.Chrome
-    :return: None
-    :rtype: None
     """
     driver.execute_script(
         """
@@ -401,8 +432,6 @@ def navigate_to_bigjpg(driver: webdriver.Chrome) -> None:
     :param driver: The Selenium WebDriver instance.
     :type driver: webdriver.Chrome
     :raises TimeoutError: If bigjpg.com could'nt be loaded
-    :return: None
-    :rtype: None
     """
     try:
         driver.get("https://bigjpg.com")
@@ -429,6 +458,7 @@ def upscale(image_path: str, output_directory: Path) -> str | None:
         while True:
             tor_process = start_tor()
             sleep(20)
+            wait_for_tor(timeout=60)
             result = upscale_bigjpg(str(image_path), output_directory)
             stop_tor(tor_process)
             tor_process = None
