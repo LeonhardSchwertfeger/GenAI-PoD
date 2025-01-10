@@ -504,7 +504,7 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
 
     try:
         driver.set_page_load_timeout(60)
-        driver.get(f"https://de.vexels.com/nischen/funny/{randbelow(30) + 1}/")
+        driver.get(f"https://de.vexels.com/nischen/lustig/{randbelow(30) + 1}/")
         active_drivers.append(driver)
 
         WebDriverWait(driver, 60).until(
