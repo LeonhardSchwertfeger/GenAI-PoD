@@ -15,7 +15,7 @@ Features:
   settings for the uploaded design.
 - Finalizes the upload process, ensuring the design is published successfully.
 - Handles various exceptions such as timeout issues, missing elements and incorrect
-  inputs, with detailed logging.
+  inputs, with detailed logger.
 """
 
 from __future__ import annotations
@@ -37,6 +37,12 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
 from genai_pod.utils import UploadConfig, iterate_and_upload, start_chrome
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 def upload_spreadshirt(upload_path: str) -> None:
@@ -85,7 +91,7 @@ def _wait_and_click(
             ec.element_to_be_clickable((by, selector)),
         ).click()
     except Exception:
-        logging.info("Failed to click on element with selector: %s", selector)
+        logger.info("Failed to click on element with selector: %s", selector)
 
 
 def _check_not_available_names(
@@ -181,11 +187,11 @@ def _check_not_available_names(
             return True, final_tags_string  # Correction made
 
     except NoSuchElementException:
-        logging.info("%s", str(field_type.capitalize()) + "is already valid.")
+        logger.info("%s", str(field_type.capitalize()) + "is already valid.")
         return False, text  # No error element found
 
     except TimeoutException:
-        logging.info(
+        logger.error(
             "Error message did not disappear after correction for %s", str(field_type)
         )
         return False, text  # Correction failed
@@ -218,7 +224,7 @@ def _setup_tags(driver: uc.Chrome, tags: str | list[str]) -> None:
             input_element.send_keys(tag)
             input_element.send_keys(Keys.ENTER)
 
-    logging.info("***TAG SETUP DONE***")
+    logger.info("***TAG SETUP DONE***")
 
 
 def wait_until_value_exceeds_50(driver: uc.Chrome) -> None:
@@ -261,9 +267,9 @@ def _select_marketplace(driver: uc.Chrome) -> None:
     # Click on Spreadshirt
     try:
         select_marketplaces[0].click()
-        logging.info("Spreadshirt has been successfully selected.")
+        logger.info("Spreadshirt has been successfully selected.")
     except (ElementClickInterceptedException, ElementNotInteractableException) as e:
-        logging.info(
+        logger.exception(
             "Failed to select Spreadshirt. "
             "Please ensure the Spreadshirt option is available.",
         )
@@ -273,14 +279,14 @@ def _select_marketplace(driver: uc.Chrome) -> None:
     if len(select_marketplaces) > 1:
         try:
             select_marketplaces[1].click()
-            logging.info("Spreadshop has been successfully selected.")
+            logger.info("Spreadshop has been successfully selected.")
         except (ElementClickInterceptedException, ElementNotInteractableException):
-            logging.info(
+            logger.info(
                 "Spreadshop could not be selected. "
                 "This is optional. Please set up a Spreadshop if you wish to use this feature.",
             )
     else:
-        logging.info(
+        logger.info(
             "Spreadshop option is not available. "
             "This is optional. Please set up a Spreadshop if you wish to use this feature.",
         )
@@ -300,7 +306,7 @@ def _upload_image(driver: uc.Chrome, image_path: str) -> bool:
 
     _wait_and_click(driver, ".card-container.col-xs-1.upload-tile", timeout=60)
     driver.find_element(By.ID, "hiddenFileInput").send_keys(image_path)
-    wait = WebDriverWait(driver, timeout=60)
+    wait = WebDriverWait(driver, timeout=100)
 
     try:
         wait.until(
@@ -323,12 +329,12 @@ def _upload_image(driver: uc.Chrome, image_path: str) -> bool:
                     "Du hast das tägliche Limit für Uploads erreicht."
                     in limit_message_element.text
                 ):
-                    logging.exception("Upload limit reached.")
+                    logger.warning("Upload limit reached.")
                     sys.exit(1)
-                logging.exception("Upload failed, error element found.")
+                logger.error("Upload failed, error element found.")
                 return False
         except NoSuchElementException:
-            logging.info("No upload error detected, proceeding.")
+            logger.info("No upload error detected, proceeding.")
 
     wait.until(
         ec.invisibility_of_element_located((By.CSS_SELECTOR, ".preview-image-loader")),
@@ -400,11 +406,11 @@ def _select_marketplace_and_save(driver: uc.Chrome) -> None:
             timeout=60,
         )
     except NoSuchElementException:
-        logging.info(
+        logger.info(
             "No Element found while determining if original or marketplace selection is required.",
         )
     except Exception:
-        logging.info(
+        logger.info(
             "Problem while determining if original or marketplace selection is required.",
         )
 

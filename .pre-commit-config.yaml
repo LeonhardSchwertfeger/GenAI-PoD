@@ -41,6 +41,7 @@ repos:
           - webdriver-manager
           - seleniumbase
           - cloup
+          - types-click
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.4.2
     hooks:

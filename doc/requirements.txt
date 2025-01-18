@@ -1,8 +1,10 @@
+click
 cloup
 ipython
 nbsphinx
 numpy
 pillow
+python-dotenv
 pytz
 requests
 selenium

@@ -35,24 +35,84 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from tqdm import tqdm
-from webdriver_manager.chrome import ChromeDriverManager  # type: ignore[import]
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 def start_tor() -> subprocess.Popen:
-    """Start the Tor service by calling the Tor executable.
+    """Starts the Tor service by calling the Tor executable.
 
     :return: The process object representing the running Tor service.
     :rtype: subprocess.Popen
     """
-    logging.info("Starting Tor service...")
-    tor_executable = which("tor")
-    if not tor_executable:
-        raise FileNotFoundError("Tor executable not found in PATH.")
+    import platform
+
+    from dotenv import dotenv_values, load_dotenv
+
+    env_file = Path(__file__).parents[1] / ".env"
+
+    if env_file.exists():
+        load_dotenv(dotenv_path=env_file)
+        config = dotenv_values(dotenv_path=env_file)
+        tor_binary_path = config.get("TOR_BINARY_PATH")
+    else:
+        tor_binary_path = None
+
+    if platform.machine().lower() == "aarch64" and not tor_binary_path:
+        logging.warning(
+            "Tor binary path not set. Please use the command "
+            "'genai setting_tor_binary --path' to set one."
+        )
+        logging.info(
+            "aarch64 has an unofficial Tor binary. I recommend the Tor binary from "
+            "https://sourceforge.net/projects/tor-browser-ports/files/13.0.9/"
+        )
+        logging.info("Continue with 'which('tor')', but this could now cause errors!")
+        tor_binary_path = which("tor")
+
+    # For all architectures, that doesn't use aarch64 or individual path to tor-binary
+    if not tor_binary_path:
+        tor_binary_path = which("tor")
+
     return subprocess.Popen(  # noqa: S603
-        [tor_executable],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        [tor_binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
+
+
+def wait_for_tor(timeout: int = 60) -> None:
+    """
+    Test the session with get request with SOCKS5-Proxy on https://check.torproject.org.
+    :param timeout: the time till timeout
+    :type timeout: int
+    """
+    import requests
+
+    logger.info("Waiting till connected...")
+
+    start_time = time()
+    session = requests.Session()
+    session.proxies = {
+        "http": "socks5h://127.0.0.1:9050",
+        "https": "socks5h://127.0.0.1:9050",
+    }
+    while True:
+        try:
+            r = session.get("https://check.torproject.org", timeout=10)
+            if r.status_code == 200:
+                logger.info("Tor is now available!")
+                return
+        except Exception as e:
+            logger.exception("Error while waiting for Tor %s", e)
+
+        if time() - start_time > timeout:
+            raise TimeoutError("Tor not connected (Timeout).")
+
+        # Checks every 2 seconds
+        sleep(2)
 
 
 def stop_tor(tor_process: subprocess.Popen) -> None:
@@ -60,10 +120,8 @@ def stop_tor(tor_process: subprocess.Popen) -> None:
 
     :param tor_process: The process object representing the Tor service.
     :type tor_process: subprocess.Popen
-    :return: None
-    :rtype: None
     """
-    logging.info("Stopping Tor service...")
+    logger.info("Stopping Tor service...")
     tor_process.terminate()
     tor_process.wait()
 
@@ -89,10 +147,8 @@ def setup_driver() -> webdriver.Chrome:
     chrome_options.add_argument("--no-sandbox")
     chrome_options.page_load_strategy = "eager"
 
-    chromedriver_path = Path(ChromeDriverManager().install())
-    logging.info("chromedriver_path %s,", chromedriver_path)
     driver = webdriver.Chrome(
-        service=Service(chromedriver_path),
+        service=Service(which("chromedriver")),
         options=chrome_options,
     )
     driver.maximize_window()
@@ -128,10 +184,10 @@ def _download_and_process_image(
         image = Image.open(BytesIO(image_data))
         raw_image = Path(output_directory) / f"{title}.png"
         image.save(raw_image)
-        logging.info("Image saved successfully to %s", raw_image)
+        logger.info("Image saved successfully to %s", raw_image)
         return raw_image
     except (OSError, RequestException, ValueError) as e:
-        logging.exception("Failed to download the image: %s", e)
+        logger.exception("Failed to download the image: %s", e)
         raise
 
 
@@ -150,14 +206,14 @@ def check_warning_modal(driver: webdriver.Chrome) -> str:
         iter(driver.find_elements(By.CSS_SELECTOR, "#modal_alert .modal-title")), None
     )
     if warning and warning.text == "Warnung":
-        logging.warning("Warning modal detected!")
+        logger.warning("Warning modal detected!")
         return "warning"
 
     error = driver.find_elements(
         By.CSS_SELECTOR, 'div.pic_mask.danger[style="display: block;"]'
     )
     if error:
-        logging.info("Image is too big!")
+        logger.warning("Image is too big!")
         return "image_too_big"
 
     return "no_warning"
@@ -170,16 +226,16 @@ def upload_image(driver: webdriver.Chrome, image_path: str) -> None:
     :type driver: webdriver.Chrome
     :param image_path: The path to the image to upload.
     :type image_path: str
-    :return: None
-    :rtype: None
     """
+    import os
+
     driver.execute_script(
         """
         const input = document.getElementById('fileupload');
         input.style.display = 'block';
     """,
     )
-    driver.find_element(By.ID, "fileupload").send_keys(str(image_path))
+    driver.find_element(By.ID, "fileupload").send_keys(os.path.abspath(image_path))
 
 
 def initiate_upscaling(driver: webdriver.Chrome) -> None:
@@ -189,8 +245,6 @@ def initiate_upscaling(driver: webdriver.Chrome) -> None:
 
     :param driver: The Selenium WebDriver instance.
     :type driver: webdriver.Chrome
-    :return: None
-    :rtype: None
     """
     driver.execute_script(
         """
@@ -249,7 +303,7 @@ def monitor_progress(driver: webdriver.Chrome) -> str | None:
             pbar.update(percent - pbar.n)
 
             if percent >= 100:
-                logging.info("Upscaling was successful")
+                logger.info("Upscaling was successful")
                 return "success"
 
             if percent == 0:
@@ -304,7 +358,7 @@ def upscale_bigjpg(image_path: str, out_dir: Path) -> str | None:
     :type out_dir: Path
     :return: str | None
     """
-    logging.info("*** Start upscaling ***")
+    logger.info("*** Start upscaling ***")
     retry_limit = 3
     result = None
 
@@ -322,7 +376,7 @@ def upscale_bigjpg(image_path: str, out_dir: Path) -> str | None:
                 return image_path
 
             initiate_upscaling(driver)
-            logging.info("Initiated upscaling...")
+            logger.info("Initiated upscaling...")
             sleep(10)
 
             status = monitor_progress(driver)
@@ -335,27 +389,27 @@ def upscale_bigjpg(image_path: str, out_dir: Path) -> str | None:
                         )
                     )
                     break
-                logging.error("Download URL not found.")
+                logger.error("Download URL not found.")
             elif status == "warning":
-                logging.info("Warning detected during progress, restarting...")
+                logger.info("Warning detected during progress, restarting...")
                 raise Exception("Warning detected during progress.")
             elif status == "image_too_big":
-                logging.info("Image is too big during progress. Aborting upscaling.")
+                logger.info("Image is too big during progress. Aborting upscaling.")
                 return image_path
 
         except RuntimeError:
-            logging.exception("UpscaleError encountered")
+            logger.error("UpscaleError encountered")
         except Exception:
-            logging.exception("Unexpected Error while upscaling")
+            logger.error("Unexpected Error while upscaling")
         finally:
             driver.quit()
 
         if retry < retry_limit - 1:
-            logging.info("Retrying...")
+            logger.info("Retrying...")
             sleep(5)
 
     if not result:
-        logging.error("Retry limit reached. Exiting...")
+        logger.error("Retry limit reached. Exiting...")
         return image_path
 
     return result
@@ -370,10 +424,10 @@ def handle_initial_status(driver: webdriver.Chrome) -> bool:
     """
     status_initial = check_warning_modal(driver)
     if status_initial == "image_too_big":
-        logging.info("Image is too big. Aborting upscaling.")
+        logger.info("Image is too big. Aborting upscaling.")
         return True
     if status_initial == "warning":
-        logging.info("Warning detected. Restarting the process.")
+        logger.info("Warning detected. Restarting the process.")
         raise Exception("Warning modal detected.")
     return False
 
@@ -387,10 +441,10 @@ def handle_post_upload_status(driver: webdriver.Chrome) -> bool:
     """
     status_after_upload = check_warning_modal(driver)
     if status_after_upload == "image_too_big":
-        logging.info("Image is too big after upload. Aborting upscaling.")
+        logger.info("Image is too big after upload. Aborting upscaling.")
         return True
     if status_after_upload == "warning":
-        logging.info("Warning detected after upload. Restarting the process.")
+        logger.info("Warning detected after upload. Restarting the process.")
         raise Exception("Warning modal detected after upload.")
     return False
 
@@ -401,8 +455,6 @@ def navigate_to_bigjpg(driver: webdriver.Chrome) -> None:
     :param driver: The Selenium WebDriver instance.
     :type driver: webdriver.Chrome
     :raises TimeoutError: If bigjpg.com could'nt be loaded
-    :return: None
-    :rtype: None
     """
     try:
         driver.get("https://bigjpg.com")
@@ -429,6 +481,7 @@ def upscale(image_path: str, output_directory: Path) -> str | None:
         while True:
             tor_process = start_tor()
             sleep(20)
+            wait_for_tor(timeout=60)
             result = upscale_bigjpg(str(image_path), output_directory)
             stop_tor(tor_process)
             tor_process = None
@@ -436,12 +489,12 @@ def upscale(image_path: str, output_directory: Path) -> str | None:
             if result and result != image_path:
                 return result
             if result == image_path:
-                logging.info(
+                logger.info(
                     "Upscaling aborted due to oversized image or repeated warnings."
                 )
                 return result
 
-            logging.info("Restarting the whole process...")
+            logger.info("Restarting the whole process...")
     finally:
         if tor_process:
             stop_tor(tor_process)
