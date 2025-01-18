@@ -48,13 +48,13 @@ dependencies = [
     "cloup",
     "selenium",
     "webdriver-manager",
+    "python-dotenv",
     "pytz",
     "undetected-chromedriver==3.5.5",
     "seleniumbase",
     "requests",
     "tqdm",
     "numpy",
-    "python-dotenv",
 ]
 
 [project.scripts]
