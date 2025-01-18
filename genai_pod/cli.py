@@ -29,6 +29,8 @@ from dotenv import load_dotenv, set_key
 if TYPE_CHECKING:
     from cloup import Context
 
+logger = logging.getLogger(__name__)
+
 
 @group()
 @version_option(message="%version%")
@@ -123,12 +125,6 @@ def verifysite(profile_name: str) -> None:
     """Verify an account in Chrome for capsolver, ChatGPT, or Spreadshirt/Redbubble."""
     from genai_pod.utilitys.verify_sites import verify
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    logger = logging.getLogger(__name__)
-
     profile_to_site = {
         "capsolver": "https://chromewebstore.google.com/detail/captcha-l%C3%B6ser-auto-hcaptc/"
         "hlifkpholllijblknnmbfagnkjneagid",
@@ -153,18 +149,20 @@ def verifysite(profile_name: str) -> None:
 @click.option(
     "--path",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True),
-    help="Path to the Tor-Binary. If not specified, "
-    "an attempt is made to find Tor in the system PATH.",
+    help=(
+        "Path to the Tor binary. If not specified, "
+        "an attempt is made to find Tor in the system PATH."
+    ),
 )
 @click.pass_context
 def setting_tor_binary(ctx, path: str):
     """
-    Sets the path to the Tor-Binary and save it in the .env file.
+    Sets the path to the Tor binary and saves it in the .env file.
     """
     tor_exec = Path(path).resolve()
 
     if not tor_exec.is_file():
-        ctx.fail("The specified Tor-Binary %s" + str(tor_exec) + " is not a file.")
+        ctx.fail(f"The specified Tor binary {str(tor_exec)} is not a file.")
 
     env_file = (Path(__file__).parent) / ".env"
     env_file.touch(exist_ok=True)
@@ -172,23 +170,24 @@ def setting_tor_binary(ctx, path: str):
 
     tor_binary_path = str(tor_exec)
     set_key(str(env_file), "TOR_BINARY_PATH", tor_binary_path)
-    click.echo("Saved Tor-Binary in .env: %s", str(tor_binary_path))
+    logger.info("Saved Tor-Binary in .env: %s", tor_binary_path)
 
 
 @cli.command()
 def show_tor_path():
     """
-    Shows the saved Tor-Binary Path in the .env file
+    Shows the saved Tor binary path in the .env file.
     """
     import os
 
-    load_dotenv(dotenv_path=Path(__file__).parent / ".env")
+    env_file = Path(__file__).parent / ".env"
+    load_dotenv(dotenv_path=env_file)
     tor_binary_path = os.getenv("TOR_BINARY_PATH")
 
     if tor_binary_path:
-        click.echo("Current Tor-Binary Path:  %s", str(tor_binary_path))
+        logger.info("Current Tor-Binary Path: %s", tor_binary_path)
     else:
-        click.echo(
+        logger.info(
             "Tor-Binary path not set. Please use the command "
             "'genai setting_tor_binary --path' to set one."
         )
