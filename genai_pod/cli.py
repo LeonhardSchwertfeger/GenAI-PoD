@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import logging
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import click
 from cloup import (  # type: ignore[import]
     STRING,
     Choice,
@@ -22,6 +24,7 @@ from cloup import (  # type: ignore[import]
     pass_context,
     version_option,
 )
+from dotenv import load_dotenv, set_key
 
 if TYPE_CHECKING:
     from cloup import Context
@@ -120,6 +123,12 @@ def verifysite(profile_name: str) -> None:
     """Verify an account in Chrome for capsolver, ChatGPT, or Spreadshirt/Redbubble."""
     from genai_pod.utilitys.verify_sites import verify
 
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger(__name__)
+
     profile_to_site = {
         "capsolver": "https://chromewebstore.google.com/detail/captcha-l%C3%B6ser-auto-hcaptc/"
         "hlifkpholllijblknnmbfagnkjneagid",
@@ -129,12 +138,57 @@ def verifysite(profile_name: str) -> None:
 
     site = profile_to_site.get(profile_name.lower())
     if site is None:
-        logging.error("Unknown profile name: %s", profile_name)
+        logger.error("Unknown profile name: %s", profile_name)
         sys.exit(1)
 
     try:
         verify(profile_name, site)
-        logging.info("Browser successfully opened for %s at %s.", profile_name, site)
-    except Exception:
-        logging.exception("Exception while starting chrome")
+        logger.info("Browser successfully opened for %s at %s.", profile_name, site)
+    except Exception as e:
+        logger.exception("Exception while starting chrome %s", e)
         sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    "--path",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True),
+    help="Path to the Tor-Binary. If not specified, "
+    "an attempt is made to find Tor in the system PATH.",
+)
+@click.pass_context
+def setting_tor_binary(ctx, path: str):
+    """
+    Sets the path to the Tor-Binary and save it in the .env file.
+    """
+    tor_exec = Path(path).resolve()
+
+    if not tor_exec.is_file():
+        ctx.fail("The specified Tor-Binary %s" + str(tor_exec) + " is not a file.")
+
+    env_file = (Path(__file__).parent) / ".env"
+    env_file.touch(exist_ok=True)
+    load_dotenv(dotenv_path=env_file)
+
+    tor_binary_path = str(tor_exec)
+    set_key(str(env_file), "TOR_BINARY_PATH", tor_binary_path)
+    click.echo("Saved Tor-Binary in .env: %s", str(tor_binary_path))
+
+
+@cli.command()
+def show_tor_path():
+    """
+    Shows the saved Tor-Binary Path in the .env file
+    """
+    import os
+
+    load_dotenv(dotenv_path=Path(__file__).parent / ".env")
+    tor_binary_path = os.getenv("TOR_BINARY_PATH")
+
+    if tor_binary_path:
+        click.echo("Current Tor-Binary Path:  %s", str(tor_binary_path))
+    else:
+        click.echo(
+            "Tor-Binary path not set. Please use the command "
+            "'genai setting_tor_binary --path' to set one."
+        )

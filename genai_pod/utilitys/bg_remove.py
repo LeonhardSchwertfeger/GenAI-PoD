@@ -40,7 +40,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from genai_pod.utils import start_chrome
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 class AbortScriptError(Exception):
@@ -84,9 +88,9 @@ def _error_capsolver(driver: uc.Chrome) -> None:
                 "ERROR_CAPTCHA_SOLVE_FAILED",
             ),
         ):
-            logging.info("ERROR_CAPTCHA_SOLVE_FAILED")
+            logger.info("ERROR_CAPTCHA_SOLVE_FAILED")
     except Exception:
-        logging.info("Captcha solve error not found.")
+        logger.info("Captcha solve error not found.")
 
 
 def run_bg_remove(image_path: str) -> Path:
@@ -117,7 +121,7 @@ def run_bg_remove(image_path: str) -> Path:
             ).click()
             WebDriverWait(driver, 5).until(ec.staleness_of(dialog))
         except Exception:
-            logging.info("Dialog not found. Skipping.")
+            logger.info("Dialog not found. Skipping.")
 
         # Click on 'Bild wählen' button
         try:
@@ -134,7 +138,7 @@ def run_bg_remove(image_path: str) -> Path:
             # Use JavaScript to click the element
             driver.execute_script("arguments[0].click();", button)
         except TimeoutException:
-            logging.info("Button 'Bild wählen' not found. Skipping this step.")
+            logger.error("Button 'Bild wählen' not found. Skipping this step.")
 
         # Upload image
         try:
@@ -158,7 +162,7 @@ def run_bg_remove(image_path: str) -> Path:
                 sleep(10)
                 break
             except (NoSuchElementException, ElementNotVisibleException) as err:
-                logging.warning(
+                logger.warning(
                     "Attempt %s failed to click the download button.", attempt + 1
                 )
                 if attempt == 1:
@@ -167,7 +171,7 @@ def run_bg_remove(image_path: str) -> Path:
                         driver,
                     ) from err
     except Exception as err:
-        logging.exception("An error occurred in run_bg_remove: %s", err)
+        logger.exception("An error occurred in run_bg_remove: %s", err)
         raise AbortScriptError("Error in run_bg_remove", driver) from err
     finally:
         if driver:
@@ -192,10 +196,10 @@ def bg_remove(image_path: str, retries: int = 2) -> Path | None:
         try:
             return run_bg_remove(image_path)
         except AbortScriptError as err:
-            logging.exception("Attempt %d/%d failed: %s", attempt + 1, retries, err)
+            logger.exception("Attempt %d/%d failed: %s", attempt + 1, retries, err)
             err.close_driver()
             if attempt == retries - 1:
-                logging.exception("Maximum number of attempts reached. Aborting.")
+                logger.exception("Maximum number of attempts reached. Aborting.")
                 return None
-            logging.info("Retrying...")
+            logger.info("Retrying...")
     return None

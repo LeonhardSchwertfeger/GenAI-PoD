@@ -44,6 +44,7 @@ license = { file = "LICENSE" }
 requires-python = ">=3.11"
 dependencies = [
     "pillow",
+    "click",
     "cloup",
     "selenium",
     "webdriver-manager",
@@ -53,6 +54,7 @@ dependencies = [
     "requests",
     "tqdm",
     "numpy",
+    "python-dotenv",
 ]
 
 [project.scripts]
@@ -71,6 +73,7 @@ dev = [
     "pylint",
     # Typing
     "mypy",
+    "types-click",
     # dev
     "ipykernel", # python3 -m ipykernel install --user --name=genai_pod
     # documentation
@@ -129,22 +132,5 @@ cache-dir = ".cache/ruff"
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["E501", "F841", "N802", "S101", "S106", "S110", "TID252"]
 
-[mypy]
-
-[mypy."undetected_chromedriver.*"]
-ignore_missing_imports = true
-
-[mypy."seleniumbase.*"]
-ignore_missing_imports = true
-
-[mypy."webdriver_manager.chrome.*"]
-ignore_missing_imports = true
-
-[mypy."numpy.*"]
-ignore_missing_imports = true
-
-[mypy."cloup.*"]
-ignore_missing_imports = true
-
-[mypy-aws_xray_sdk]
+[tool.mypy]
 ignore_missing_imports = true

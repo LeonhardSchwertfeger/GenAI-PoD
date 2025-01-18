@@ -21,6 +21,12 @@ from pathlib import Path
 
 from genai_pod.utils import save_cookies, start_chrome
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 
 def verify(profile_name: str, site: str) -> None:
     """Start a Chrome browser with specified settings and load a website.
@@ -38,8 +44,8 @@ def verify(profile_name: str, site: str) -> None:
 
     try:
         save_cookies(driver, Path("chromedata") / "cookies.json")
-        logging.info("Cookies saved")
+        logger.info("Cookies saved")
     except Exception as e:
-        logging.exception("Failed to save cookies: %s", e)
+        logger.exception("Failed to save cookies: %s", e)
 
     driver.quit()

@@ -44,7 +44,11 @@ from tqdm import tqdm
 
 from genai_pod.utils import chromedata
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 def upload_redbubble(**kwargs) -> None:
@@ -57,7 +61,7 @@ def upload_redbubble(**kwargs) -> None:
     try:
         upload_path = kwargs.get("upload_path")
         if not upload_path:
-            logging.error("upload_path not provided in kwargs.")
+            logger.error("upload_path not provided in kwargs.")
             return
 
         user_data_folder, chrome_profile = chromedata("Spreadshirt")
@@ -69,7 +73,7 @@ def upload_redbubble(**kwargs) -> None:
                 f"--profile-directory={chrome_profile}",
             ],
         ) as sb:
-            logging.info("Browser launched with specified user data directory.")
+            logger.info("Browser launched with specified user data directory.")
             sb.open(
                 "https://www.redbubble.com/portfolio/images/new?ref=account-nav-dropdown"
             )
@@ -77,27 +81,27 @@ def upload_redbubble(**kwargs) -> None:
             # Time to login manually for the first time
             try:
                 sb.wait_for_element("#login-form-container", timeout=10)
-                logging.info("Login form detected. Please log in manually.")
+                logger.info("Login form detected. Please log in manually.")
                 sb.wait_for_element_absent("#login-form-container", timeout=120)
             except Exception:
-                logging.info("You are logged in!")
+                logger.info("You are logged in!")
 
             # Solving Cloudflare challenge
             try:
                 verify_success(sb)
             except Exception as e:
-                logging.exception("Failed to bypass Cloudflare: %s", e)
+                logger.warning("Failed to bypass Cloudflare: %s", e)
 
-            logging.info("Starting iterate_and_upload.")
+            logger.info("Starting iterate_and_upload.")
             iterate_and_upload(
                 sb,
                 upload_path,
                 "used_redbubble",
                 "error_redbubble",
             )
-            logging.info("Finished the upload.")
+            logger.info("Finished the upload.")
     except Exception as e:
-        logging.exception("An error occurred in upload_redbubble: %s", e)
+        logger.error("An error occurred in upload_redbubble: %s", e)
 
 
 def _click_button_by_data_type(sb: SB, data_type: str, action: str) -> None:
@@ -132,7 +136,7 @@ def _click_button_by_data_type(sb: SB, data_type: str, action: str) -> None:
         sb.execute_script("arguments[0].scrollIntoView();", button)
         button.click()
     except ElementClickInterceptedException:
-        logging.info(
+        logger.warning(
             "Click intercepted. Trying to close overlays and retrying for '%s'.",
             data_type,
         )
@@ -144,15 +148,15 @@ def _click_button_by_data_type(sb: SB, data_type: str, action: str) -> None:
         sb.execute_script("arguments[0].scrollIntoView();", button)
         button.click()
     except (NoSuchElementException, TimeoutException):
-        logging.info("Product '%s' is no longer available.", data_type)
+        logger.info("Product '%s' is no longer available.", data_type)
     except ElementNotInteractableException:
-        logging.info(
+        logger.info(
             "Action '%s' already performed for product '%s'.",
             action,
             data_type,
         )
     except Exception as e:
-        logging.exception(
+        logger.warning(
             "Error clicking button for data_type '%s' and action '%s': %s",
             data_type,
             action,
@@ -169,16 +173,16 @@ def _close_overlays(sb: SB) -> None:
     try:
         if sb.is_element_visible("div#privacy-policy"):
             sb.click('button[aria-label="Close"]')
-            logging.info("Closed privacy policy overlay.")
+            logger.info("Closed privacy policy overlay.")
     except Exception:
-        logging.info("Can't click on button[aria-label='Close'")
+        logger.info("Can't click on button[aria-label='Close'")
 
     try:
         if sb.is_element_visible("div.modal-dialog"):
             sb.click('button[aria-label="Close"]')
-            logging.info("Closed modal dialog.")
+            logger.info("Closed modal dialog.")
     except Exception:
-        logging.info("Can't click on button[aria-label='Close'")
+        logger.info("Can't click on button[aria-label='Close'")
 
 
 def _load_config(filename: str | Path) -> dict:
@@ -213,7 +217,7 @@ def _setup_clothes(sb: SB, base_scaling: str) -> None:
     if base_scaling in scaling_adjustments:
         product_adjustments = scaling_adjustments[base_scaling]
     else:
-        logging.info("No adjustments defined for scaling value: %s", base_scaling)
+        logger.info("No adjustments defined for scaling value: %s", base_scaling)
         return
 
     for data_type, (action, final_scaling) in product_adjustments.items():
@@ -238,7 +242,7 @@ def adjust_product(sb: SB, data_type: str, action: str, final_scaling: int) -> N
             _click_button_by_data_type(sb, data_type, "edit")
             _adjust_design_size(sb, data_type, final_scaling)
     except Exception as e:
-        logging.exception("Failed to adjust product '%s': %s", data_type, e)
+        logger.warning("Failed to adjust product '%s': %s", data_type, e)
 
 
 def _adjust_and_publish(sb: SB, image_path: str) -> None:
@@ -263,7 +267,7 @@ def _adjust_and_publish(sb: SB, image_path: str) -> None:
     elif width > 1000:
         _setup_clothes(sb, "1024x1024")
     else:
-        logging.info("Design size too small.")
+        logger.info("Design size too small.")
         raise Exception
 
     # Wait for the page to be ready
@@ -283,7 +287,7 @@ def _adjust_and_publish(sb: SB, image_path: str) -> None:
     # Navigate back to the new upload page
     sb.open("https://www.redbubble.com/portfolio/images/new")
     sb.sleep(4)
-    logging.info("Finished _adjust_and_publish.")
+    logger.info("Finished _adjust_and_publish.")
 
 
 def _select_media_types(sb: SB) -> None:
@@ -293,14 +297,14 @@ def _select_media_types(sb: SB) -> None:
     :type sb: SB
     """
     try:
-        logging.info("Selecting media types.")
+        logger.info("Selecting media types.")
         sb.wait_for_element_visible("#media_design", timeout=10)
         sb.scroll_to("#media_design")
         sb.click("#media_design")
         sb.click("#media_digital")
-        logging.info("Selected media types.")
+        logger.info("Selected media types.")
     except Exception as e:
-        logging.exception("Failed to select media types: %s", e)
+        logger.exception("Failed to select media types: %s", e)
 
 
 def _set_safe_for_work(sb: SB) -> None:
@@ -313,9 +317,9 @@ def _set_safe_for_work(sb: SB) -> None:
         sb.wait_for_element_visible("#work_safe_for_work_true", timeout=10)
         sb.scroll_to("#work_safe_for_work_true")
         sb.click("#work_safe_for_work_true")
-        logging.info("Set content as safe for work.")
+        logger.info("Set content as safe for work.")
     except Exception as e:
-        logging.exception("Failed to set content as safe for work: %s", e)
+        logger.exception("Failed to set content as safe for work: %s", e)
 
 
 def _set_default_product(sb: SB) -> None:
@@ -328,9 +332,9 @@ def _set_default_product(sb: SB) -> None:
         sb.wait_for_element_visible("#work_default_product", timeout=10)
         sb.scroll_to("#work_default_product")
         sb.select_option_by_text("#work_default_product", "T-Shirt")
-        logging.info("Selected T-Shirt as default product.")
+        logger.info("Selected T-Shirt as default product.")
     except Exception as e:
-        logging.exception("Failed to select default product: %s", e)
+        logger.error("Failed to select default product: %s", e)
 
 
 def _set_visibility(sb: SB) -> None:
@@ -343,9 +347,9 @@ def _set_visibility(sb: SB) -> None:
         sb.wait_for_element_visible("#work_hidden_false", timeout=10)
         sb.scroll_to("#work_hidden_false")
         sb.click("#work_hidden_false")
-        logging.info("Set visibility to public.")
+        logger.info("Set visibility to public.")
     except Exception as e:
-        logging.exception("Failed to set visibility: %s", e)
+        logger.exception("Failed to set visibility: %s", e)
 
 
 def _accept_user_agreement(sb: SB) -> None:
@@ -358,9 +362,9 @@ def _accept_user_agreement(sb: SB) -> None:
         sb.wait_for_element_visible("#rightsDeclaration", timeout=10)
         sb.scroll_to("#rightsDeclaration")
         sb.click("#rightsDeclaration")
-        logging.info("Accepted user agreement.")
+        logger.info("Accepted user agreement.")
     except Exception as e:
-        logging.exception("Failed to accept user agreement: %s", e)
+        logger.exception("Failed to accept user agreement: %s", e)
     sb.sleep(3)
 
 
@@ -374,9 +378,9 @@ def _publish_design(sb: SB) -> None:
         sb.wait_for_element_visible("#submit-work", timeout=10)
         sb.scroll_to("#submit-work")
         sb.click("#submit-work")
-        logging.info("Clicked publish button.")
+        logger.info("Clicked publish button.")
     except Exception as e:
-        logging.exception("Failed to click publish button: %s", e)
+        logger.exception("Failed to click publish button: %s", e)
     sb.sleep(15)
 
 
@@ -422,9 +426,9 @@ def _adjust_design_size(sb: SB, data_type: str, slider_value: int) -> None:
             )
 
         except Exception:
-            logging.exception("Error adjusting design size for '%s'", data_type)
+            logger.warning("Error adjusting design size for '%s'", data_type)
     else:
-        logging.info("No valid class name found. Does '%s' still exist?", data_type)
+        logger.warning("No valid class name found. Does '%s' still exist?", data_type)
 
 
 def _find_and_adjust_design_size(sb: SB, data_type: str) -> str | None:
@@ -446,12 +450,10 @@ def _find_and_adjust_design_size(sb: SB, data_type: str) -> str | None:
 
         if parent_divs:
             return parent_divs[0].get_attribute("class")
-        logging.info("No suitable div element found for data type '%s'.", data_type)
+        logger.warning("No suitable div element found for data type '%s'.", data_type)
         return None
     except Exception:
-        logging.exception(
-            "No suitable div element found for data type '%s'.", data_type
-        )
+        logger.warning("No suitable div element found for data type '%s'.", data_type)
         return None
 
 
@@ -497,7 +499,7 @@ def _upload_with_selenium(
     :param image_path: The file path to the image to be uploaded.
     :type image_path: str
     """
-    logging.info("Starting upload with image: %s", image_path)
+    logger.info("Starting upload with image: %s", image_path)
     tags_list = tag.strip().split(",")
     if len(tags_list) > 15:
         tags_list = tags_list[:15]
@@ -508,7 +510,7 @@ def _upload_with_selenium(
     # Dismiss cookie consent banner if present
     if sb.is_element_visible("button#onetrust-accept-btn-handler"):
         sb.click("button#onetrust-accept-btn-handler")
-        logging.info("Closed cookie consent banner.")
+        logger.info("Closed cookie consent banner.")
 
     # Dismiss any modals if present
     _close_overlays(sb)
@@ -519,10 +521,10 @@ def _upload_with_selenium(
         file_input.send_keys(image_path)
     except Exception as e:
         if sb.driver.find_element(By.CLASS_NAME, "exceeded-upload-limit"):
-            logging.info("***Exceeded upload limit!***")
+            logger.warning("***Exceeded upload limit!***")
             sys.exit(1)
 
-        logging.exception("Failed to send image path to file input: %s", e)
+        logger.exception("Failed to send image path to file input: %s", e)
         raise Exception from e  # Skipping to the next image
 
     # Wait for the image to finish uploading
@@ -533,15 +535,15 @@ def _upload_with_selenium(
 
     # Set the title
     sb.type("#work_title_en", title)
-    logging.info("Set title.")
+    logger.info("Set title.")
 
     # Set the tags
     sb.type("#work_tag_field_en", tags_str)
-    logging.info("Set tags.")
+    logger.info("Set tags.")
 
     # Set the description
     sb.type("#work_description_en", description)
-    logging.info("Set description.")
+    logger.info("Set description.")
 
     # Proceed with adjusting product settings and publishing
     _adjust_and_publish(sb, image_path)
@@ -565,7 +567,7 @@ def iterate_and_upload(
     :param error_folder: Destination folder for failed uploads.
     :type error_folder: str
     """
-    logging.info("Starting iterate_and_upload in path: %s", upload_path)
+    logger.info("Starting iterate_and_upload in path: %s", upload_path)
     exclude_folders = [folder, error_folder]
     base_path = Path(upload_path)
 
@@ -579,18 +581,18 @@ def iterate_and_upload(
     ]
 
     if not subdirs:
-        logging.warning(
+        logger.warning(
             "No subdirectories found to process. Exiting iterate_and_upload."
         )
         return
 
     for subdir in tqdm(subdirs, desc="Processing designs"):
-        logging.info("Processing subdirectory: %s", subdir)
+        logger.info("Processing subdirectory: %s", subdir)
         result = process_subdir(subdir, base_path, folder, error_folder, sb)
         if not result:
-            logging.error("An error occurred during processing folder %s.", subdir)
+            logger.error("An error occurred during processing folder %s.", subdir)
 
-    logging.info("Finished iterate_and_upload.")
+    logger.info("Finished iterate_and_upload.")
 
 
 def process_subdir(
@@ -613,7 +615,7 @@ def process_subdir(
     :rtype: bool
     """
     try:
-        logging.info("Starting to process subdir: %s", subdir)
+        logger.info("Starting to process subdir: %s", subdir)
 
         # Searching for an image file in the subdirectory
         image_file = next(
@@ -621,7 +623,7 @@ def process_subdir(
             None,
         )
         if image_file:
-            logging.debug("Found image file: %s", image_file)
+            logger.debug("Found image file: %s", image_file)
         else:
             raise FileNotFoundError(f"No image file found in {subdir}")
 
@@ -646,15 +648,15 @@ def process_subdir(
             image_path=str(image_file),
         )
 
-        logging.info("Successfully uploaded %s. Moving to %s.", subdir, folder)
+        logger.info("Successfully uploaded %s. Moving to %s.", subdir, folder)
         move(str(subdir), base_path / folder)
 
     except FileNotFoundError as e:
-        logging.exception(str(e))
+        logger.exception(str(e))
         move(str(subdir), base_path / error_folder)
         return False
     except Exception as e:
-        logging.exception("Error processing folder %s: %s", subdir, e)
+        logger.exception("Error processing folder %s: %s", subdir, e)
         move(str(subdir), base_path / error_folder)
         return False
 
