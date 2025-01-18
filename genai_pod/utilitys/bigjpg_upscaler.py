@@ -53,7 +53,7 @@ def start_tor() -> subprocess.Popen:
 
     from dotenv import dotenv_values, load_dotenv
 
-    env_file = Path(__file__).parent / ".env"
+    env_file = Path(__file__).parents[1] / ".env"
 
     if env_file.exists():
         load_dotenv(dotenv_path=env_file)
