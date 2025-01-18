@@ -47,7 +47,7 @@ Commands
   - ``generategpt``: Generate images using GPT through Selenium.
 
 .. image:: ../assets/generating.gif
-   :alt: Example GIF
+   :alt: generating GIF
    :width: 900px
    :align: center
 
@@ -68,7 +68,7 @@ Commands
 
 
 .. image:: ../assets/Explanation.png
-   :alt: Alternativtext
+   :alt: Explanation
    :width: 900px
    :align: center
 

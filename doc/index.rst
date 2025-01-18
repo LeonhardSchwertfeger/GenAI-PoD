@@ -17,6 +17,7 @@ Welcome to the GenAI documentation.
    web_shop_usage
    command_line_interface
    aarch64_usage
+   setting_tor_binary
    license
 
 Indices and tables

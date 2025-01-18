@@ -34,7 +34,7 @@ Spreadshirt Usage
 
 
 .. image:: ../assets/upload.gif
-   :alt: Example GIF
+   :alt: upload GIF
    :width: 900px
    :align: center
 
