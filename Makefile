@@ -89,3 +89,10 @@ html:
 
 clean-docs:
 	rm -rf $(BUILDDIR)
+
+
+## retest Run only the tests that failed last time
+##
+.PHONY: retest
+retest:
+	$(PYTHON) -m pytest $(PYTEST_OPTS) --lf $(TESTS)

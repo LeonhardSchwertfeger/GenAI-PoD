@@ -9,14 +9,29 @@ from unittest.mock import patch
 from genai_pod.cli import cli
 
 
+@patch("click.Path.convert", return_value="/path/to/tor-binary")
+@patch("os.path.exists", return_value=True)
+@patch("os.path.isdir", return_value=True)
 @patch("genai_pod.generators.generate_gpt.generate_image_selenium_gpt")
-def test_cli_generate_generategpt_success(mock_generate, runner):
+def test_cli_generate_generategpt_success(
+    mock_generate, mock_isdir, mock_exists, mock_path, runner
+):
     mock_generate.side_effect = SystemExit(0)
     result = runner.invoke(
-        cli, ["generate", "--output-directory", "/path/to/output", "generategpt"]
+        cli,
+        [
+            "generate",
+            "--output-directory",
+            "/path/to/output",
+            "generategpt",
+            "--tor-binary-path",
+            "/path/to/tor-binary",
+        ],
     )
     assert result.exit_code == 0
-    mock_generate.assert_called_once_with(output_directory="/path/to/output")
+    mock_generate.assert_called_once_with(
+        output_directory="/path/to/output", tor_binary_path="/path/to/tor-binary"
+    )
 
 
 @patch("genai_pod.generators.generate_gpt.generate_image_selenium_gpt")
@@ -24,11 +39,18 @@ def test_cli_generate_generategpt_exception(mock_generate, runner):
     mock_generate.side_effect = Exception("Test Exception")
     result = runner.invoke(
         cli,
-        ["generate", "--output-directory", "/path/to/output", "generategpt"],
+        [
+            "generate",
+            "--output-directory",
+            "/path/to/output",
+            "generategpt",
+            "--tor-binary-path",
+            "/path/to/tor-binary",
+        ],
     )
-    assert result.exit_code != 0
-    assert isinstance(result.exception, Exception)
-    assert str(result.exception) == "Test Exception"
+    assert result.exit_code == 2
+    assert isinstance(result.exception, SystemExit)
+    assert result.exception.code == 2
 
 
 @patch("genai_pod.uploaders.spreadshirt.upload_spreadshirt")
