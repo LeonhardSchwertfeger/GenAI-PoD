@@ -22,7 +22,6 @@ from re import sub
 from secrets import choice, randbelow
 from tempfile import NamedTemporaryFile
 from time import sleep
-from typing import Any
 
 import undetected_chromedriver as uc  # type: ignore[import]
 from PIL import Image
@@ -290,7 +289,9 @@ def _gpt_type_text(driver: uc.Chrome, text: str) -> None:
     textarea.send_keys(text)
 
 
-def _process_image(image_url: str, image_dir: str, title: str) -> Path:
+def _process_image(
+    image_url: str, image_dir: str, title: str, tor_binary_path: str | None
+) -> Path:
     """Process and save an image from a given URL, remove its background, and then upscale it.
 
     :param image_url: The URL of the image to process.
@@ -324,10 +325,14 @@ def _process_image(image_url: str, image_dir: str, title: str) -> Path:
     bg_removed_image_path = bg_remove(str(raw_image_path))
 
     logger.info("Upscaling for 2k image...")
-    upscaled_image_path = upscale(str(bg_removed_image_path), Path(output_directory))
+    upscaled_image_path = upscale(
+        str(bg_removed_image_path), Path(output_directory), tor_binary_path
+    )
 
     logger.info("Upscaling for 4k image...")
-    upscaled_image_path2 = upscale(str(upscaled_image_path), Path(output_directory))
+    upscaled_image_path2 = upscale(
+        str(upscaled_image_path), Path(output_directory), tor_binary_path
+    )
 
     if upscaled_image_path2:
         logger.info("Pilling image...")
@@ -597,7 +602,9 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
             driver.quit()
 
 
-def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -> None:
+def _start_generating(
+    driver: uc.Chrome, image_dir: str, image_file_path: str, tor_binary_path: str | None
+) -> None:
     """Start generating an image using GPT and save it to a specified directory.
 
     :param driver: The Selenium WebDriver instance.
@@ -695,7 +702,7 @@ def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -
     _handle_errors(driver)
 
     driver.quit()
-    result = _process_image(image_url, image_dir, title)
+    result = _process_image(image_url, image_dir, title, tor_binary_path)
     write_metadata(
         title=title,
         tags=tags,
@@ -709,13 +716,14 @@ def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -
         logger.error("Error deleting temporary image file")
 
 
-def generate_image_selenium_gpt(**kwargs: dict[str, Any]) -> None:
+def generate_image_selenium_gpt(
+    output_directory: str, tor_binary_path: str | None
+) -> None:
     """Main function to start the GPT generating process."""
     import time
 
     max_retries = 5
     retries = 0
-    output_directory = kwargs.get("output_directory")
 
     if not isinstance(output_directory, str):
         logger.error("Invalid 'output_directory' parameter.")
@@ -736,7 +744,9 @@ def generate_image_selenium_gpt(**kwargs: dict[str, Any]) -> None:
             logger.info("Starting ChatGPT session and generating image.")
             chatgpt_driver = _start_chat_gpt()
             active_drivers.append(chatgpt_driver)
-            _start_generating(chatgpt_driver, output_directory, image_file_path)
+            _start_generating(
+                chatgpt_driver, output_directory, image_file_path, tor_binary_path
+            )
             active_drivers.remove(chatgpt_driver)
 
             logger.info("Image generation completed successfully.")

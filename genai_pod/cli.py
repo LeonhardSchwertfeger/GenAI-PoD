@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 import sys
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import click
@@ -24,7 +23,6 @@ from cloup import (  # type: ignore[import]
     pass_context,
     version_option,
 )
-from dotenv import load_dotenv, set_key
 
 if TYPE_CHECKING:
     from cloup import Context
@@ -66,15 +64,27 @@ def generate(ctx: Context, output_directory: str) -> None:
 
 
 @generate.command()
+@option(
+    "--tor-binary-path",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+    ),
+    help="Path to the Tor binary.",
+    required=False,
+)
 @pass_context
-def generategpt(ctx: Context, **kwargs: Any) -> None:
+def generategpt(ctx: Context, tor_binary_path) -> None:
     """Use GPT to generate images via Selenium."""
     from genai_pod.generators.generate_gpt import (
         AbortScriptError,
         generate_image_selenium_gpt,
     )
 
-    ctx.obj |= kwargs
+    ctx.obj |= {"tor_binary_path": tor_binary_path}
     while True:
         try:
             generate_image_selenium_gpt(**ctx.obj)
@@ -143,51 +153,3 @@ def verifysite(profile_name: str) -> None:
     except Exception as e:
         logger.exception("Exception while starting chrome %s", e)
         sys.exit(1)
-
-
-@cli.command()
-@click.option(
-    "--path",
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True),
-    help=(
-        "Path to the Tor binary. If not specified, "
-        "an attempt is made to find Tor in the system PATH."
-    ),
-)
-@click.pass_context
-def setting_tor_binary(ctx, path: str):
-    """
-    Sets the path to the Tor binary and saves it in the .env file.
-    """
-    tor_exec = Path(path).resolve()
-
-    if not tor_exec.is_file():
-        ctx.fail(f"The specified Tor binary {str(tor_exec)} is not a file.")
-
-    env_file = (Path(__file__).parent) / ".env"
-    env_file.touch(exist_ok=True)
-    load_dotenv(dotenv_path=env_file)
-
-    tor_binary_path = str(tor_exec)
-    set_key(str(env_file), "TOR_BINARY_PATH", tor_binary_path)
-    logger.info("Saved Tor-Binary in .env: %s", tor_binary_path)
-
-
-@cli.command()
-def show_tor_path():
-    """
-    Shows the saved Tor binary path in the .env file.
-    """
-    import os
-
-    env_file = Path(__file__).parent / ".env"
-    load_dotenv(dotenv_path=env_file)
-    tor_binary_path = os.getenv("TOR_BINARY_PATH")
-
-    if tor_binary_path:
-        logger.info("Current Tor-Binary Path: %s", tor_binary_path)
-    else:
-        logger.info(
-            "Tor-Binary path not set. Please use the command "
-            "'genai setting_tor_binary --path' to set one."
-        )

@@ -39,43 +39,37 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def start_tor() -> subprocess.Popen:
+def start_tor(tor_binary_path: str | None) -> subprocess.Popen:
     """Starts the Tor service by calling the Tor executable.
 
     :return: The process object representing the running Tor service.
     :rtype: subprocess.Popen
     """
-    import platform
 
-    from dotenv import dotenv_values, load_dotenv
+    if tor_binary_path is None:
+        import platform
 
-    env_file = Path(__file__).parents[1] / ".env"
+        if platform.machine().lower() == "aarch64" and tor_binary_path is None:
+            logging.warning(
+                "Tor binary path not set. Please use the command "
+                "'genai setting_tor_binary --path' to set one."
+            )
+            logging.info(
+                "aarch64 has an unofficial Tor binary. I recommend the Tor binary from "
+                "https://sourceforge.net/projects/tor-browser-ports/files/13.0.9/"
+            )
+            logging.info(
+                "Continue with 'which('tor')', but this could now cause errors!"
+            )
+    tor_binary_path = tor_binary_path or which("tor")
 
-    if env_file.exists():
-        load_dotenv(dotenv_path=env_file)
-        config = dotenv_values(dotenv_path=env_file)
-        tor_binary_path = config.get("TOR_BINARY_PATH")
-    else:
-        tor_binary_path = None
-
-    if platform.machine().lower() == "aarch64" and not tor_binary_path:
-        logging.warning(
-            "Tor binary path not set. Please use the command "
-            "'genai setting_tor_binary --path' to set one."
-        )
-        logging.info(
-            "aarch64 has an unofficial Tor binary. I recommend the Tor binary from "
-            "https://sourceforge.net/projects/tor-browser-ports/files/13.0.9/"
-        )
-        logging.info("Continue with 'which('tor')', but this could now cause errors!")
-        tor_binary_path = which("tor")
-
-    # For all architectures, that doesn't use aarch64 or individual path to tor-binary
     if not tor_binary_path:
-        tor_binary_path = which("tor")
+        raise Exception("You don't have a Tor-Binary!")
 
     return subprocess.Popen(  # noqa: S603
-        [tor_binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        [tor_binary_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
 
 
@@ -463,7 +457,9 @@ def navigate_to_bigjpg(driver: webdriver.Chrome) -> None:
         ) from exc
 
 
-def upscale(image_path: str, output_directory: Path) -> str | None:
+def upscale(
+    image_path: str, output_directory: Path, tor_binary_path: str | None
+) -> str | None:
     """Main function to upscale an image using the Bigjpg service.
 
     Starts the Tor service, handles retries and orchestrates the upscaling process.
@@ -477,7 +473,7 @@ def upscale(image_path: str, output_directory: Path) -> str | None:
     tor_process = None
     try:
         while True:
-            tor_process = start_tor()
+            tor_process = start_tor(tor_binary_path)
             sleep(20)
             wait_for_tor(timeout=60)
             result = upscale_bigjpg(str(image_path), output_directory)
