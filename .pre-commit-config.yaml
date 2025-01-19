@@ -91,6 +91,7 @@ repos:
         additional_dependencies:
           - types-requests
           - undetected-chromedriver
+          - types-click
         pass_filenames: false
         args:
           - --config-file=pyproject.toml
