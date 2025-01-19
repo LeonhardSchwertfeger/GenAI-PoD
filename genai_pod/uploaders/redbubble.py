@@ -44,10 +44,6 @@ from tqdm import tqdm
 
 from genai_pod.utils import chromedata
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 

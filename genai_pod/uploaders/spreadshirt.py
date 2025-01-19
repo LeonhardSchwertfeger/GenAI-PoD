@@ -38,10 +38,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from genai_pod.utils import UploadConfig, iterate_and_upload, start_chrome
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 

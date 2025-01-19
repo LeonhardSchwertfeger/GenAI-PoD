@@ -36,10 +36,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from tqdm import tqdm
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 
@@ -101,12 +97,14 @@ def wait_for_tor(timeout: int = 60) -> None:
     }
     while True:
         try:
-            r = session.get("https://check.torproject.org", timeout=10)
+            r = session.get("https://check.torproject.org", timeout=timeout)
             if r.status_code == 200:
                 logger.info("Tor is now available!")
                 return
+        except requests.exceptions.HTTPError as http_err:
+            logger.error("HTTP error occurred: %s", http_err)
         except Exception as e:
-            logger.exception("Error while waiting for Tor %s", e)
+            logger.exception("Error while waiting for Tor: %s", e)
 
         if time() - start_time > timeout:
             raise TimeoutError("Tor not connected (Timeout).")

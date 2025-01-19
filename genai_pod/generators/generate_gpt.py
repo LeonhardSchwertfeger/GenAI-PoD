@@ -46,10 +46,6 @@ from genai_pod.utils import clean_string, pilling_image, start_chrome, write_met
 
 active_drivers: list[WebDriver] = []
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 
