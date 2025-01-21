@@ -84,9 +84,9 @@ def _error_capsolver(driver: uc.Chrome) -> None:
                 "ERROR_CAPTCHA_SOLVE_FAILED",
             ),
         ):
-            logger.info("ERROR_CAPTCHA_SOLVE_FAILED")
+            logger.warning("ERROR_CAPTCHA_SOLVE_FAILED")
     except Exception:
-        logger.info("Captcha solve error not found.")
+        logger.debug("Captcha solve error not found.")
 
 
 def run_bg_remove(image_path: str) -> Path:
@@ -117,7 +117,7 @@ def run_bg_remove(image_path: str) -> Path:
             ).click()
             WebDriverWait(driver, 5).until(ec.staleness_of(dialog))
         except Exception:
-            logger.info("Dialog not found. Skipping.")
+            logger.debug("Dialog not found. Skipping.")
 
         # Click on 'Bild wählen' button
         try:
@@ -134,7 +134,7 @@ def run_bg_remove(image_path: str) -> Path:
             # Use JavaScript to click the element
             driver.execute_script("arguments[0].click();", button)
         except TimeoutException:
-            logger.error("Button 'Bild wählen' not found. Skipping this step.")
+            logger.warning("Button 'Bild wählen' not found. Skipping this step.")
 
         # Upload image
         try:
@@ -158,7 +158,7 @@ def run_bg_remove(image_path: str) -> Path:
                 sleep(10)
                 break
             except (NoSuchElementException, ElementNotVisibleException) as err:
-                logger.warning(
+                logger.debug(
                     "Attempt %s failed to click the download button.", attempt + 1
                 )
                 if attempt == 1:
@@ -192,10 +192,10 @@ def bg_remove(image_path: str, retries: int = 2) -> Path | None:
         try:
             return run_bg_remove(image_path)
         except AbortScriptError as err:
-            logger.exception("Attempt %d/%d failed: %s", attempt + 1, retries, err)
+            logger.warning("Attempt %d/%d failed: %s", attempt + 1, retries, err)
             err.close_driver()
             if attempt == retries - 1:
-                logger.exception("Maximum number of attempts reached. Aborting.")
+                logger.error("Maximum number of attempts reached. Aborting.")
                 return None
             logger.info("Retrying...")
     return None

@@ -342,12 +342,10 @@ def iterate_and_upload(
         if subdir.is_dir() and subdir.name not in config.exclude_folders
     ]
 
-    logger.info("Found %d subdirectories to process.", len(subdirs))
+    logger.debug("Found %d subdirectories to process.", len(subdirs))
 
     if not subdirs:
-        logger.warning(
-            "No subdirectories found to process. Exiting iterate_and_upload."
-        )
+        logger.warning("No subdirectories found to process. Exiting iterating process.")
         return
 
     for subdir in subdirs:
@@ -396,7 +394,7 @@ def process_subdir(
         title_text = read_file_contents(subdir / "title.txt")
 
         # Attempt to upload using the provided upload function
-        logger.info("Calling upload function.")
+        logger.debug("Calling upload function.")
         success = config.upload_function(
             driver=driver,
             description=description_text,
@@ -408,7 +406,7 @@ def process_subdir(
         target_folder = config.used_folder_name if success else config.error_folder_name
         move(str(subdir), base_path / target_folder)
         if success:
-            logger.info(
+            logger.debug(
                 "Successfully uploaded %s. Moving to %s.", subdir, target_folder
             )
         else:

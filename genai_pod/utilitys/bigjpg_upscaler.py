@@ -58,13 +58,16 @@ def start_tor(tor_binary_path: str | None) -> subprocess.Popen:
                 "aarch64 has an unofficial Tor binary. I recommend the Tor binary from "
                 "https://sourceforge.net/projects/tor-browser-ports/files/13.0.9/"
             )
-            logging.info(
+            logging.debug(
                 "Continue with 'which('tor')', but this could now cause errors!"
             )
     tor_binary_path = tor_binary_path or which("tor")
 
     if not tor_binary_path:
-        raise Exception("You don't have a Tor-Binary!")
+        import sys
+
+        logger.error("You don't have a Tor-Binary!")
+        sys.exit(1)
 
     return subprocess.Popen(  # noqa: S603
         [tor_binary_path],
@@ -96,7 +99,7 @@ def wait_for_tor(timeout: int = 60) -> None:
                 logger.info("Tor is now available!")
                 return
         except requests.exceptions.HTTPError as http_err:
-            logger.error("HTTP error occurred: %s", http_err)
+            logger.exception("HTTP error occurred: %s", http_err)
         except Exception as e:
             logger.exception("Error while waiting for Tor: %s", e)
 
@@ -205,7 +208,7 @@ def check_warning_modal(driver: webdriver.Chrome) -> str:
         By.CSS_SELECTOR, 'div.pic_mask.danger[style="display: block;"]'
     )
     if error:
-        logger.warning("Image is too big!")
+        logger.error("Image is too big!")
         return "image_too_big"
 
     return "no_warning"
@@ -383,10 +386,10 @@ def upscale_bigjpg(image_path: str, out_dir: Path) -> str | None:
                     break
                 logger.error("Download URL not found.")
             elif status == "warning":
-                logger.info("Warning detected during progress, restarting...")
+                logger.warning("Warning detected during progress, restarting...")
                 raise Exception("Warning detected during progress.")
             elif status == "image_too_big":
-                logger.info("Image is too big during progress. Aborting upscaling.")
+                logger.error("Image is too big during progress. Aborting upscaling.")
                 return image_path
 
         except RuntimeError:
@@ -416,11 +419,10 @@ def handle_initial_status(driver: webdriver.Chrome) -> bool:
     """
     status_initial = check_warning_modal(driver)
     if status_initial == "image_too_big":
-        logger.info("Image is too big. Aborting upscaling.")
+        logger.error("Image is too big. Aborting upscaling.")
         return True
     if status_initial == "warning":
-        logger.info("Warning detected. Restarting the process.")
-        raise Exception("Warning modal detected.")
+        raise Exception("Warning detected. Restarting the process.")
     return False
 
 
@@ -433,11 +435,10 @@ def handle_post_upload_status(driver: webdriver.Chrome) -> bool:
     """
     status_after_upload = check_warning_modal(driver)
     if status_after_upload == "image_too_big":
-        logger.info("Image is too big after upload. Aborting upscaling.")
+        logger.error("Image is too big after upload. Aborting upscaling.")
         return True
     if status_after_upload == "warning":
-        logger.info("Warning detected after upload. Restarting the process.")
-        raise Exception("Warning modal detected after upload.")
+        raise Exception("Warning detected after upload. Restarting the process.")
     return False
 
 
@@ -483,7 +484,7 @@ def upscale(
             if result and result != image_path:
                 return result
             if result == image_path:
-                logger.info(
+                logger.error(
                     "Upscaling aborted due to oversized image or repeated warnings."
                 )
                 return result

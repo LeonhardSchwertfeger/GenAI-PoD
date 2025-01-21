@@ -15,7 +15,7 @@ Features:
   settings for the uploaded design.
 - Finalizes the upload process, ensuring the design is published successfully.
 - Handles various exceptions such as timeout issues, missing elements and incorrect
-  inputs, with detailed logger.
+  inputs, with detailed logging.
 """
 
 from __future__ import annotations
@@ -82,12 +82,13 @@ def _wait_and_click(
     :param timeout: The maximum time to wait in seconds, defaults to 30.
     :type timeout: int, optional
     """
+
     try:
         WebDriverWait(driver, timeout).until(
             ec.element_to_be_clickable((by, selector)),
         ).click()
     except Exception:
-        logger.info("Failed to click on element with selector: %s", selector)
+        logger.exception("Failed to click on element with selector: %s", selector)
 
 
 def _check_not_available_names(
@@ -183,7 +184,7 @@ def _check_not_available_names(
             return True, final_tags_string  # Correction made
 
     except NoSuchElementException:
-        logger.info("%s", str(field_type.capitalize()) + "is already valid.")
+        logger.debug("%s", str(field_type.capitalize()) + "is already valid.")
         return False, text  # No error element found
 
     except TimeoutException:
@@ -267,22 +268,22 @@ def _select_marketplace(driver: uc.Chrome) -> None:
     except (ElementClickInterceptedException, ElementNotInteractableException) as e:
         logger.exception(
             "Failed to select Spreadshirt. "
-            "Please ensure the Spreadshirt option is available.",
+            "Please ensure the Spreadshirt option is available. %e",
+            e,
         )
-        raise e
 
     # Attempt to click on Spreadshop
     if len(select_marketplaces) > 1:
         try:
             select_marketplaces[1].click()
-            logger.info("Spreadshop has been successfully selected.")
+            logger.debug("Spreadshop has been successfully selected.")
         except (ElementClickInterceptedException, ElementNotInteractableException):
-            logger.info(
+            logger.warning(
                 "Spreadshop could not be selected. "
                 "This is optional. Please set up a Spreadshop if you wish to use this feature.",
             )
     else:
-        logger.info(
+        logger.warning(
             "Spreadshop option is not available. "
             "This is optional. Please set up a Spreadshop if you wish to use this feature.",
         )
@@ -325,12 +326,12 @@ def _upload_image(driver: uc.Chrome, image_path: str) -> bool:
                     "Du hast das tägliche Limit für Uploads erreicht."
                     in limit_message_element.text
                 ):
-                    logger.warning("Upload limit reached.")
+                    logger.error("Upload limit reached.")
                     sys.exit(1)
                 logger.error("Upload failed, error element found.")
                 return False
         except NoSuchElementException:
-            logger.info("No upload error detected, proceeding.")
+            logger.debug("No upload error detected, proceeding.")
 
     wait.until(
         ec.invisibility_of_element_located((By.CSS_SELECTOR, ".preview-image-loader")),
@@ -402,11 +403,11 @@ def _select_marketplace_and_save(driver: uc.Chrome) -> None:
             timeout=60,
         )
     except NoSuchElementException:
-        logger.info(
+        logger.error(
             "No Element found while determining if original or marketplace selection is required.",
         )
     except Exception:
-        logger.info(
+        logger.error(
             "Problem while determining if original or marketplace selection is required.",
         )
 

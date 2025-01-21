@@ -67,12 +67,12 @@ def _start_chat_gpt() -> uc.Chrome:
     driver.get(
         "https://chatgpt.com/g/g-SdXPspagG-merch-on-demand-print-on-demand-shirt-designer",
     )
-    logger.info("Waiting for login page to load.")
+    logger.debug("Waiting for login page to load.")
 
     if _is_element_present(
         driver, "//*[contains(text(), 'Log in with your OpenAI account to continue')]"
     ):
-        logger.info("Login page detected. Please log in manually.")
+        logger.warning("Login page detected. Please log in manually.")
         _wait_for_element(driver, "//div[@id='chatgpt-interface']", 300)
 
     logger.info("Logged in! (:")
@@ -256,10 +256,10 @@ def _bad_gateway(driver: uc.Chrome) -> bool:
                 (By.CSS_SELECTOR, ".cf-error-details.cf-error-502")
             ),
         ):
-            logger.info("The web server reported a bad gateway error.")
+            logger.warning("The web server reported a bad gateway error.")
             return True
     except Exception:
-        logger.warning("Error is not because of the gateway")
+        logger.error("Error is not because of the gateway")
     return False
 
 
@@ -403,7 +403,7 @@ def _handle_usage_limit(driver: uc.Chrome) -> None:
             )
             _wait_until_time(target_time)
         except ValueError as e:
-            logger.error("Error parsing time: %s", e)
+            logger.exception("Error parsing time: %s", e)
             _handle_network_error(driver)
     else:
         logger.warning("Unexpected usage limit error text.")
@@ -419,7 +419,7 @@ def _handle_network_error(driver: uc.Chrome) -> None:
     """
     if _check_error(driver, "div.text-sm.text-token-text-error", ""):
         raise AbortScriptError("Network error detected.")
-    logger.info("No network error found.")
+    logger.debug("No network error found.")
 
 
 def _calculate_target_time(time_part: str, error_text: str) -> datetime:
@@ -533,7 +533,7 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
         forbidden_words_list = [
             word.lower() for word in forbidden_words.get("forbidden_words", [])
         ]
-        logger.info("Loaded %s forbidden words.", len(forbidden_words_list))
+        logger.debug("Loaded %s forbidden words.", len(forbidden_words_list))
 
         for attempt in range(10):
             asset = choice(driver.find_elements(By.CLASS_NAME, "vx-grid-asset"))
@@ -594,7 +594,7 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
         return None
 
     except Exception as e:
-        logger.error("Error in _scrape_vexels_image: %s", str(e))
+        logger.exception("Error in _scrape_vexels_image: %s", str(e))
         return None
 
     finally:
@@ -769,7 +769,7 @@ def generate_image_selenium_gpt(
                 driver.quit()
             active_drivers.clear()
             retries += 1
-            logger.info(
+            logger.warning(
                 "Restarting the process due to an unexpected error... (%d/%d)",
                 retries,
                 max_retries,

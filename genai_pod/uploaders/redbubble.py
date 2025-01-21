@@ -69,7 +69,7 @@ def upload_redbubble(**kwargs) -> None:
                 f"--profile-directory={chrome_profile}",
             ],
         ) as sb:
-            logger.info("Browser launched with specified user data directory.")
+            logger.debug("Browser launched with specified user data directory.")
             sb.open(
                 "https://www.redbubble.com/portfolio/images/new?ref=account-nav-dropdown"
             )
@@ -77,7 +77,7 @@ def upload_redbubble(**kwargs) -> None:
             # Time to login manually for the first time
             try:
                 sb.wait_for_element("#login-form-container", timeout=10)
-                logger.info("Login form detected. Please log in manually.")
+                logger.warning("Login form detected. Please log in manually.")
                 sb.wait_for_element_absent("#login-form-container", timeout=120)
             except Exception:
                 logger.info("You are logged in!")
@@ -97,7 +97,7 @@ def upload_redbubble(**kwargs) -> None:
             )
             logger.info("Finished the upload.")
     except Exception as e:
-        logger.error("An error occurred in upload_redbubble: %s", e)
+        logger.exception("An error occurred in upload_redbubble: %s", e)
 
 
 def _click_button_by_data_type(sb: SB, data_type: str, action: str) -> None:
@@ -144,9 +144,9 @@ def _click_button_by_data_type(sb: SB, data_type: str, action: str) -> None:
         sb.execute_script("arguments[0].scrollIntoView();", button)
         button.click()
     except (NoSuchElementException, TimeoutException):
-        logger.info("Product '%s' is no longer available.", data_type)
+        logger.debug("Product '%s' is no longer available.", data_type)
     except ElementNotInteractableException:
-        logger.info(
+        logger.debug(
             "Action '%s' already performed for product '%s'.",
             action,
             data_type,
@@ -166,19 +166,25 @@ def _close_overlays(sb: SB) -> None:
     :param sb: The SeleniumBase instance.
     :type sb: SB
     """
+    # Closing privacy policy overlay
     try:
         if sb.is_element_visible("div#privacy-policy"):
             sb.click('button[aria-label="Close"]')
-            logger.info("Closed privacy policy overlay.")
-    except Exception:
-        logger.info("Can't click on button[aria-label='Close'")
+            logger.info("Successfully closed the privacy policy overlay.")
+        else:
+            logger.debug("Privacy policy overlay not visible, nothing to close.")
+    except Exception as e:
+        logger.warning("Failed to close privacy policy overlay: %s", str(e))
 
+    # Closing modal dialog
     try:
         if sb.is_element_visible("div.modal-dialog"):
             sb.click('button[aria-label="Close"]')
-            logger.info("Closed modal dialog.")
-    except Exception:
-        logger.info("Can't click on button[aria-label='Close'")
+            logger.info("Successfully closed a modal dialog overlay.")
+        else:
+            logger.debug("Modal dialog overlay not visible, nothing to close.")
+    except Exception as e:
+        logger.warning("Failed to close modal dialog overlay: %s", str(e))
 
 
 def _load_config(filename: str | Path) -> dict:
@@ -263,7 +269,7 @@ def _adjust_and_publish(sb: SB, image_path: str) -> None:
     elif width > 1000:
         _setup_clothes(sb, "1024x1024")
     else:
-        logger.info("Design size too small.")
+        logger.error("Design size too small.")
         raise Exception
 
     # Wait for the page to be ready
@@ -283,7 +289,7 @@ def _adjust_and_publish(sb: SB, image_path: str) -> None:
     # Navigate back to the new upload page
     sb.open("https://www.redbubble.com/portfolio/images/new")
     sb.sleep(4)
-    logger.info("Finished _adjust_and_publish.")
+    logger.debug("Finished _adjust_and_publish.")
 
 
 def _select_media_types(sb: SB) -> None:
@@ -298,7 +304,7 @@ def _select_media_types(sb: SB) -> None:
         sb.scroll_to("#media_design")
         sb.click("#media_design")
         sb.click("#media_digital")
-        logger.info("Selected media types.")
+        logger.debug("Selected media types.")
     except Exception as e:
         logger.exception("Failed to select media types: %s", e)
 
@@ -517,7 +523,7 @@ def _upload_with_selenium(
         file_input.send_keys(image_path)
     except Exception as e:
         if sb.driver.find_element(By.CLASS_NAME, "exceeded-upload-limit"):
-            logger.warning("***Exceeded upload limit!***")
+            logger.error("***Exceeded upload limit!***")
             sys.exit(1)
 
         logger.exception("Failed to send image path to file input: %s", e)
@@ -588,7 +594,7 @@ def iterate_and_upload(
         if not result:
             logger.error("An error occurred during processing folder %s.", subdir)
 
-    logger.info("Finished iterate_and_upload.")
+    logger.debug("Finished iterate_and_upload.")
 
 
 def process_subdir(
@@ -611,7 +617,7 @@ def process_subdir(
     :rtype: bool
     """
     try:
-        logger.info("Starting to process subdir: %s", subdir)
+        logger.debug("Starting to process subdir: %s", subdir)
 
         # Searching for an image file in the subdirectory
         image_file = next(
