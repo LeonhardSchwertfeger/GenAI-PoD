@@ -4,15 +4,17 @@
 # Leonhard Thomas Schwertfeger https://github.com/LeonhardSchwertfeger
 #
 
-"""This module provides functionality for generating images using Selenium WebDriver
+"""
+This module provides functionality for generating images using Selenium WebDriver
 and ChatGPT. It integrates various utilities for automating browser interactions,
-image processing and data scraping. The primary purpose is to facilitate the
+image processing, and data scraping. The primary purpose is to facilitate the
 creation, customization, and enhancement of images for print-on-demand platforms.
 """
 
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timedelta
 from hashlib import sha256
 from io import BytesIO
@@ -22,13 +24,16 @@ from re import sub
 from secrets import choice, randbelow
 from tempfile import NamedTemporaryFile
 from time import sleep
-from typing import Any
 
 import undetected_chromedriver as uc  # type: ignore[import]
 from PIL import Image
 from pytz import timezone
 from requests import get
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    TimeoutException,
+    WebDriverException,
+)
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -40,8 +45,9 @@ from genai_pod.utilitys.bg_remove import bg_remove
 from genai_pod.utilitys.bigjpg_upscaler import upscale
 from genai_pod.utils import clean_string, pilling_image, start_chrome, write_metadata
 
-logging.basicConfig(level=logging.INFO)
 active_drivers: list[WebDriver] = []
+
+logger = logging.getLogger(__name__)
 
 
 # The login logic is based on code from the project
@@ -56,38 +62,23 @@ def _start_chat_gpt() -> uc.Chrome:
     :return: The uc.Chrome instance.
     :rtype: uc.Chrome
     """
+
     driver = start_chrome("ChatGPT", None)
     active_drivers.append(driver)
+
     driver.get(
         "https://chatgpt.com/g/g-SdXPspagG-merch-on-demand-print-on-demand-shirt-designer",
     )
-    logging.info("Waiting for login page to load.")
+    logger.info("Waiting for login page to load.")
 
     if _is_element_present(
         driver, "//*[contains(text(), 'Log in with your OpenAI account to continue')]"
     ):
-        logging.info("Login page detected. Please log in manually.")
+        logger.info("Login page detected. Please log in manually.")
         _wait_for_element(driver, "//div[@id='chatgpt-interface']", 300)
 
-    logging.info("Logged in! (:")
+    logger.info("Logged in! (:")
     return driver
-
-
-def _find_element(driver: uc.Chrome, xpath: str) -> WebElement | None:
-    """Find an element by its XPath.
-
-    :param driver: The Selenium WebDriver instance.
-    :type driver: uc.Chrome
-    :param xpath: The XPath of the element to find.
-    :type xpath: str
-    :return: The found WebElement or None if not found.
-    :rtype: WebElement | None
-    """
-    try:
-        return driver.find_element(By.XPATH, xpath)
-    except NoSuchElementException:
-        logging.error("Element '%s' is not found.", xpath)
-        return None
 
 
 def _is_element_present(driver: uc.Chrome, xpath: str) -> bool:
@@ -104,7 +95,7 @@ def _is_element_present(driver: uc.Chrome, xpath: str) -> bool:
         driver.find_element(By.XPATH, xpath)
         return True
     except NoSuchElementException:
-        logging.info("Element '%s' is not present.", xpath)
+        logger.warning("Element '%s' is not present.", xpath)
         return False
 
 
@@ -123,7 +114,7 @@ def _wait_for_element(driver: uc.Chrome, xpath: str, timeout: int = 4) -> None:
             ec.presence_of_element_located((By.XPATH, xpath)),
         )
     except TimeoutException:
-        logging.error("Element '%s' is not present within the timeout period.", xpath)
+        logger.error("Element '%s' is not present within the timeout period.", xpath)
 
 
 def _get_image_src(driver: uc.Chrome) -> str:
@@ -133,7 +124,6 @@ def _get_image_src(driver: uc.Chrome) -> str:
     :type driver: uc.Chrome
     :return: The image source URL.
     :rtype: str
-    :raises AbortScriptError: If no valid image source is found.
     """
     try:
         image_divs: list[WebElement] = WebDriverWait(driver, 50).until(
@@ -172,8 +162,6 @@ def _get_text_from_element(
     :type retries: int, optional
     :return: The generated text from ChatGPT.
     :rtype: str
-    :raises AbortScriptError: If the text cannot be retrieved after
-                               all retries or a bad gateway error occurs.
     """
     class_xpath = (
         f"(//div[contains(@class, 'group/conversation-turn')])[{class_index + 1}]"
@@ -212,26 +200,27 @@ def _get_text_from_element(
                 return last_p_text.strip()
 
         except (NoSuchElementException, TimeoutException) as e:
-            logging.warning(
+            logger.warning(
                 "Attempt %d/%d: Failed to find elements, retrying... Exception: %s",
                 attempt + 1,
                 retries,
                 str(e),
             )
+            _handle_errors(driver)
             if _bad_gateway(driver):
-                logging.error("Bad Gateway encountered. Aborting script.")
+                logger.error("Bad Gateway encountered. Aborting script.")
                 raise AbortScriptError(
                     "Bad Gateway encountered during the process.",
                 ) from e
 
         if attempt < retries - 1:
-            logging.info("Retrying in 5 seconds...")
+            logger.info("Retrying in 5 seconds...")
             sleep(5)
         else:
-            logging.error("Failed after %d attempts.", retries)
+            logger.error("Failed after %d attempts.", retries)
             raise AbortScriptError("Failed to find the desired text after all retries.")
 
-    logging.error("Nothing is found after retries.")
+    logger.error("Nothing is found after retries.")
     raise AbortScriptError("Nothing is found after retries.")
 
 
@@ -240,7 +229,6 @@ def _gpt_send_prompt(driver: uc.Chrome) -> None:
 
     :param driver: The Selenium WebDriver instance.
     :type driver: uc.Chrome
-    :raises AbortScriptError: If the send button is not found.
     """
     try:
         WebDriverWait(driver, 600).until(
@@ -267,10 +255,10 @@ def _bad_gateway(driver: uc.Chrome) -> bool:
                 (By.CSS_SELECTOR, ".cf-error-details.cf-error-502")
             ),
         ):
-            logging.info("The web server reported a bad gateway error.")
+            logger.info("The web server reported a bad gateway error.")
             return True
     except Exception:
-        logging.info("Error is not because of the gateway")
+        logger.warning("Error is not because of the gateway.")
     return False
 
 
@@ -281,7 +269,6 @@ def _gpt_type_text(driver: uc.Chrome, text: str) -> None:
     :type driver: uc.Chrome
     :param text: The text to type.
     :type text: str
-    :raises AbortScriptError: If the text area is not found or a bad gateway error occurs.
     """
     try:
         textarea = WebDriverWait(driver, 60).until(
@@ -315,7 +302,7 @@ def _process_image(image_url: str, image_dir: str, title: str) -> Path:
     """
     import os
 
-    logging.info("Saving image from GPT...")
+    logger.info("Saving image from GPT...")
 
     image_response = get(image_url, timeout=60)
     image_response.raise_for_status()
@@ -330,17 +317,17 @@ def _process_image(image_url: str, image_dir: str, title: str) -> Path:
     raw_image_path = output_directory / f"{title}-bg.png"
     image.save(raw_image_path)
 
-    logging.info("Removing Background...")
+    logger.info("Removing Background...")
     bg_removed_image_path = bg_remove(str(raw_image_path))
 
-    logging.info("Upscaling for 2k image...")
+    logger.info("Upscaling for 2k image...")
     upscaled_image_path = upscale(str(bg_removed_image_path), Path(output_directory))
 
-    logging.info("Upscaling for 4k image...")
+    logger.info("Upscaling for 4k image...")
     upscaled_image_path2 = upscale(str(upscaled_image_path), Path(output_directory))
 
     if upscaled_image_path2:
-        logging.info("Pilling image...")
+        logger.info("Pilling image...")
         pilling_image(str(upscaled_image_path2))
         os.remove(Path(upscaled_image_path2))
 
@@ -352,8 +339,32 @@ def _process_image(image_url: str, image_dir: str, title: str) -> Path:
     return output_directory
 
 
+def _check_error_regex(driver: uc.Chrome, selector: str, pattern: str) -> bool:
+    """Check if a specific error pattern exists using regex.
+
+    :param driver: The Selenium WebDriver instance.
+    :type driver: uc.Chrome
+    :param selector: The CSS selector of the element to check.
+    :type selector: str
+    :param pattern: The regex pattern to search for in the element's text.
+    :type pattern: str
+    :return: True if the pattern matches, False otherwise.
+    :rtype: bool
+    """
+    try:
+        element = driver.find_element(By.CSS_SELECTOR, selector)
+        match = re.search(pattern, element.text, re.IGNORECASE)
+        if match:
+            logger.debug("Pattern matched: '%s' in text: '%s'", pattern, element.text)
+            return True
+        logger.debug("Pattern '%s' not found in text: '%s'", pattern, element.text)
+    except NoSuchElementException:
+        logger.debug("Element with selector '%s' not found.", selector)
+    return False
+
+
 def _check_error(driver: uc.Chrome, selector: str, error_message: str) -> bool:
-    """Check if a specific error exists.
+    """Check if a specific error message exists.
 
     :param driver: The Selenium WebDriver instance.
     :type driver: uc.Chrome
@@ -361,95 +372,143 @@ def _check_error(driver: uc.Chrome, selector: str, error_message: str) -> bool:
     :type selector: str
     :param error_message: The error message to look for.
     :type error_message: str
-    :return: True if the error exists, False otherwise.
+    :return: True if the error message is found, False otherwise.
     :rtype: bool
     """
     try:
         element = driver.find_element(By.CSS_SELECTOR, selector)
-        if error_message in element.text:
+        if error_message.lower() in element.text.lower():
+            logger.debug(
+                "Error message '%s' found in text: '%s'", error_message, element.text
+            )
             return True
+        logger.debug(
+            "Error message '%s' not found in text: '%s'", error_message, element.text
+        )
     except NoSuchElementException:
-        pass
+        logger.debug("Element with selector '%s' not found.", selector)
     return False
+
+
+def get_browser_language(driver: uc.Chrome) -> str:
+    """Retrieve the browser's preferred language.
+
+    :param driver: The Selenium WebDriver instance.
+    :type driver: uc.Chrome
+    :return: The browser's language setting.
+    :rtype: str
+    """
+    return driver.execute_script(
+        "return navigator.language || navigator.userLanguage;"
+    ).lower()
 
 
 def _handle_errors(driver: uc.Chrome) -> None:
     """Handle network and usage limit errors.
 
+    Detects if the usage cap has been reached and handles it accordingly.
+
     :param driver: The Selenium WebDriver instance.
     :type driver: uc.Chrome
-    :raises AbortScriptError: If a network error is detected.
     """
-    if _check_error(
-        driver,
-        "div.text-sm.text-token-text-error span",
-        "Nutzungsobergrenze",
-    ):
-        _handle_usage_limit(driver)
-    elif _check_error(driver, "div.text-sm.text-token-text-error span", ""):
+    error_selector = "div.text-sm.text-token-text-error span"
+    browser_language = get_browser_language(driver)
+    logger.info("Browser language: %s", browser_language)
+
+    # Error patterns for different languages and GPT versions
+    # Default language is DE, because it is set for chrome in utils.
+    # Sometimes it can happen that it switches to English,
+    # that's why it is necessary to check the usage limit for both languages
+    error_patterns = [
+        # English patterns
+        r"you've reached the current usage cap for gpt-\d+",
+        r"you have reached your usage limit for gpt-\d+",
+        r"usage cap reached for gpt-\d+",
+        r"you have exceeded the usage limits for gpt-\d+",
+        r"usage cap",
+        r"usage limit",
+        r"exceeded the usage",
+        # German patterns
+        r"du hast das aktuelle nutzungslimit für gpt-\d+ erreicht",
+        r"nutzungsobergrenze für gpt-\d+ erreicht",
+        r"du hast dein nutzungslimit für gpt-\d+ überschritten",
+        r"nutzungsobergrenze",
+        r"nutzungslimit",
+        r"überschritten",
+    ]
+
+    # Iterating through all patterns and checking for matches
+    for pattern in error_patterns:
+        if _check_error_regex(driver, error_selector, pattern):
+            logger.info("Error pattern detected: '%s'", pattern)
+            _handle_usage_limit(driver)
+            return
+
+    # If no usage cap error was detected,
+    # it checks for general network errors
+    if _check_error(driver, error_selector, ""):
         _handle_network_error(driver)
 
 
 def _handle_usage_limit(driver: uc.Chrome) -> None:
     """Handle GPT usage limit errors.
 
+    Waits until the usage limit resets based on the error message.
+
     :param driver: The Selenium WebDriver instance.
     :type driver: uc.Chrome
-    :raises AbortScriptError: After waiting for the usage limit to reset.
     """
-    error_text = driver.find_element(
-        By.CSS_SELECTOR,
-        "div.text-sm.text-token-text-error span",
-    ).text
-    if "Versuche es erneut after" in error_text:
+    error_text = ""
+    try:
+        error_element = driver.find_element(
+            By.CSS_SELECTOR,
+            "div.text-sm.text-token-text-error span",
+        )
+        error_text = error_element.text
+        logger.debug("Usage limit error text: '%s'", error_text)
+    except NoSuchElementException:
+        logger.error("Usage limit error message not found.")
+        _handle_network_error(driver)
+        return
+
+    # Extracting the time from the error message
+    if "after" in error_text.lower():
         try:
-            target_time = _calculate_target_time(
-                error_text.split("after")[1].split()[0], error_text
+            time_match = re.search(
+                r"after\s+(\d{1,2}:\d{2}\s*(?:AM|PM))", error_text, re.IGNORECASE
             )
-            _wait_until_time(target_time)
-        except ValueError as e:
-            logging.error("Error parsing time: %s", e)
+            if time_match:
+                target_time_str = time_match.group(1)
+                target_time = _parse_time(target_time_str)
+                _wait_until_time(target_time)
+            else:
+                logger.error("Could not extract time from usage limit error message.")
+                _handle_network_error(driver)
+        except Exception as e:
+            logger.error("Error processing usage limit: %s", e)
             _handle_network_error(driver)
     else:
-        logging.info("Unexpected usage limit error text.")
+        logger.warning("Unexpected usage limit error message format.")
         _handle_network_error(driver)
 
 
-def _handle_network_error(driver: uc.Chrome) -> None:
-    """Handle network-related errors.
+def _parse_time(time_str: str) -> datetime:
+    """Parse a time string into a datetime object in the Europe/Berlin timezone.
 
-    :param driver: The Selenium WebDriver instance.
-    :type driver: uc.Chrome
-    :raises AbortScriptError: If a network error is detected.
-    """
-    if _check_error(driver, "div.text-sm.text-token-text-error", ""):
-        raise AbortScriptError("Network error detected.")
-    logging.info("No network error found.")
-
-
-def _calculate_target_time(time_part: str, error_text: str) -> datetime:
-    """Calculate the target time for waiting based on the error message.
-
-    :param time_part: The time part extracted from the error message.
-    :type time_part: str
-    :param error_text: The full error message text.
-    :type error_text: str
-    :return: The target time to wait until.
+    :param time_str: The time string
+    :type time_str: str
+    :return: The parsed datetime object.
     :rtype: datetime
-    :raises ValueError: If time parsing fails.
     """
-    hour, minute = map(int, time_part.split(":"))
-
-    if "PM" in error_text and hour < 12:
-        hour += 12
-    elif "AM" in error_text and hour == 12:
-        hour = 0
-
-    euro_time = datetime.now(timezone("Europe/Berlin"))
-    target_time = euro_time.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    if target_time <= euro_time:
+    berlin_tz = timezone("Europe/Berlin")
+    now = datetime.now(berlin_tz)
+    target_time = datetime.strptime(time_str, "%I:%M %p")
+    target_time = berlin_tz.localize(
+        datetime(now.year, now.month, now.day, target_time.hour, target_time.minute)
+    )
+    if target_time <= now:
         target_time += timedelta(days=1)
-
+    logger.debug("Parsed target time: %s", target_time)
     return target_time
 
 
@@ -458,13 +517,12 @@ def _wait_until_time(target_time: datetime) -> None:
 
     :param target_time: The target time to wait until.
     :type target_time: datetime
-    :raises AbortScriptError: After the waiting time elapses.
     """
-    logging.info(
-        "Current Time (Euro Zone): %s",
+    logger.info(
+        "Current Time (Europe/Berlin): %s",
         datetime.now(timezone("Europe/Berlin")).strftime("%H:%M:%S"),
     )
-    logging.info("Waiting until: %s", target_time.strftime("%H:%M:%S"))
+    logger.info("Waiting until: %s", target_time.strftime("%H:%M:%S"))
 
     total_wait_seconds = (
         target_time - datetime.now(timezone("Europe/Berlin"))
@@ -478,6 +536,17 @@ def _wait_until_time(target_time: datetime) -> None:
     raise AbortScriptError("Usage limit reached and waiting time elapsed.")
 
 
+def _handle_network_error(driver: uc.Chrome) -> None:
+    """Handle network-related errors.
+
+    :param driver: The Selenium WebDriver instance.
+    :type driver: uc.Chrome
+    """
+    if _check_error(driver, "div.text-sm.text-token-text-error", ""):
+        raise AbortScriptError("Network error detected.")
+    logger.info("No network error found.")
+
+
 class AbortScriptError(Exception):
     """Custom exception class for aborting the script.
 
@@ -486,7 +555,6 @@ class AbortScriptError(Exception):
 
     Methods:
         close_all_drivers(): Closes all active Selenium WebDriver instances.
-
     """
 
     def __init__(self, message: str):
@@ -498,11 +566,7 @@ class AbortScriptError(Exception):
         super().__init__(message)
 
     def close_all_drivers(self) -> None:
-        """Closes all active drivers.
-
-        :return: None
-        :rtype: None
-        """
+        """Closes all active drivers."""
         global active_drivers  # pylint: disable=W0603
         for driver in active_drivers:
             driver.quit()
@@ -516,25 +580,24 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
     :type driver: uc.Chrome
     :return: The path to the temporary image file or None if failed.
     :rtype: str | None
-    :raises AbortScriptError: If scraping fails.
     """
+
     try:
         driver.set_page_load_timeout(60)
         driver.get(f"https://de.vexels.com/nischen/lustig/{randbelow(30) + 1}/")
         active_drivers.append(driver)
 
-        WebDriverWait(driver, 30).until(
+        WebDriverWait(driver, 60).until(
             ec.presence_of_all_elements_located((By.CLASS_NAME, "vx-grid-asset"))
         )
 
-        # loading forbidden words
         forbidden_words_path = (
             Path(__file__).parent.absolute().parent
             / "resources"
             / "vexel_forbidden_words.json"
         )
         if not forbidden_words_path.exists():
-            logging.error("Forbidden words JSON file not found.")
+            logger.error("Forbidden words JSON file not found.")
             return None
 
         with forbidden_words_path.open("r", encoding="utf-8") as file:
@@ -542,7 +605,7 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
         forbidden_words_list = [
             word.lower() for word in forbidden_words.get("forbidden_words", [])
         ]
-        logging.info("Loaded %s forbidden words.", len(forbidden_words_list))
+        logger.info("Loaded %s forbidden words.", len(forbidden_words_list))
 
         for attempt in range(10):
             asset = choice(driver.find_elements(By.CLASS_NAME, "vx-grid-asset"))
@@ -552,58 +615,64 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
                     By.CSS_SELECTOR, ".vx-grid-asset-container.d-block.h-100"
                 )
 
-                # finding title container
                 img_title_element = container.find_element(
                     By.CSS_SELECTOR, ".title-container h3.text"
                 )
                 img_title = driver.execute_script(
                     "return arguments[0].textContent;", img_title_element
                 ).strip()
-                logging.info("Found image title: %s", img_title)
+                logger.info("Found image title: %s", img_title)
 
                 if not img_title:
-                    logging.warning("Image title is empty")
+                    logger.warning("Image title is empty")
                     continue
 
-                # Check for forbidden words
+                # Checking for forbidden words
                 if any(word in img_title.lower() for word in forbidden_words_list):
-                    logging.info("Forbidden word found in title, retrying...")
+                    logger.warning("Forbidden word found in title, retrying...")
                     continue
 
-                # find image
                 img_element = container.find_element(
                     By.CSS_SELECTOR, ".vx-grid-figure img.vx-grid-thumb"
                 )
                 img_src = img_element.get_attribute("src")
 
                 if not img_src:
-                    logging.info("No src found for image, retrying...")
+                    logger.warning("No src found for image, retrying...")
                     continue
 
                 # Saving image
                 response = get(img_src, timeout=10)
                 response.raise_for_status()
-                logging.info("Image downloaded successfully.")
+                logger.info("Image downloaded successfully.")
 
-                # saving image in tempfile
+                # Saving image in tempfile
                 with NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
                     Image.open(BytesIO(response.content)).save(temp_file, format="PNG")
-                    driver.quit()
                     return temp_file.name
 
-            except Exception as e:
-                driver.quit()
-                logging.error(
+            except WebDriverException as e:
+                if "disconnected" in str(e):
+                    logger.warning("WebDriver disconnected. Restarting driver...")
+                    driver.quit()
+                    driver = uc.Chrome()
+                    active_drivers.append(driver)
+                    continue
+                logger.warning(
                     "Error processing asset on attempt %d: %s", attempt + 1, str(e)
                 )
                 continue
 
-        logging.error("No suitable image found after filtering.")
+        logger.error("No suitable image found after filtering.")
         return None
 
     except Exception as e:
-        logging.error("Error in _scrape_vexels_image: %s", str(e))
+        logger.error("Error in _scrape_vexels_image: %s", str(e))
         return None
+
+    finally:
+        if driver:
+            driver.quit()
 
 
 def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -> None:
@@ -615,14 +684,12 @@ def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -
     :type image_dir: str
     :param image_file_path: The path to the image file to upload.
     :type image_file_path: str
-    :raises AbortScriptError: If any step in the generation process fails.
     """
-    import time
 
     driver.set_page_load_timeout(30)
-    # time.sleep(10) waits for JavaScript to decide if the GPT model allows file uploads.
+    # sleep(10) waits for JavaScript to decide if the GPT model allows file uploads.
     # Without this wait, the image might be sent too early before uploads are allowed.
-    time.sleep(10)
+    sleep(10)
 
     # Uploading image
     try:
@@ -630,28 +697,27 @@ def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -
             ec.presence_of_element_located((By.XPATH, "//input[@type='file']")),
         ).send_keys(image_file_path)
     except Exception as e:
-        logging.error("Error uploading the image:")
+        logger.error("Error uploading the image:")
         raise AbortScriptError("Could not upload the image.") from e
+
     _gpt_type_text(
         driver,
-        "Always follow the following Prompt Guidelines."
-        "Analyse the image and Only describe the pod design",
+        "Always follow the following Prompt Guidelines. "
+        "Analyze the image and only describe the pod design.",
     )
     _gpt_send_prompt(driver)
     sleep(10)
 
     _gpt_type_text(
         driver,
-        # "Analyse the image"
-        "1. Generate a better pod design from this design description."
-        # "Keep a balanced amount of negative space around the subject."
-        "Make sure, everything is in view and zoomed out for a sticker"
-        "Only the design/vector in view!"
-        "1. Show the entire subject within the frame. (1024x1024), full in view"
-        "2. Centered composition with all elements fully visible."
-        "3. No text."
+        "1. Generate a better pod design from this design description. "
+        "Make sure everything is in view and zoomed out for a sticker. "
+        "Only the design/vector in view! "
+        "1. Show the entire subject within the frame (1024x1024), fully in view. "
+        "2. Centered composition with all elements fully visible. "
+        "3. No text. "
         "4. Isolate the graphic on a background color and just start creating it. "
-        "5. funny Rubber Hose style or as a funny Modern Pop-Art illustration",
+        "5. Funny Rubber Hose style or as a funny Modern Pop-Art illustration.",
     )
     _gpt_send_prompt(driver)
     image_url = _get_image_src(driver)
@@ -668,7 +734,7 @@ def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -
 
     _gpt_type_text(
         driver,
-        "Provide a concise description for Spreadshirt, min 200,"
+        "Provide a concise description for Spreadshirt, min 200, "
         "max 240 characters, based on the image.",
     )
     _gpt_send_prompt(driver)
@@ -679,14 +745,14 @@ def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -
 
     _gpt_type_text(
         driver,
-        "Provide concise tags for Spreadshirt, min 20 words and max 25 words,"
+        "Provide concise tags for Spreadshirt, min 20 words and max 25 words, "
         "separated by commas, based on the image.",
     )
     _gpt_send_prompt(driver)
     sleep(20)
     tags = _get_text_from_element(driver, class_index=9)
     if tags is None:
-        raise AbortScriptError("No description found!")
+        raise AbortScriptError("No tags found!")
 
     _gpt_type_text(
         driver,
@@ -715,46 +781,46 @@ def _start_generating(driver: uc.Chrome, image_dir: str, image_file_path: str) -
     try:
         Path(image_file_path).unlink()
     except Exception:
-        logging.error("Error deleting temporary image file")
+        logger.error("Error deleting temporary image file")
 
 
-def generate_image_selenium_gpt(**kwargs: dict[str, Any]) -> None:
+def generate_image_selenium_gpt(output_directory: str) -> None:
     """Main function to start the GPT generating process."""
     import time
 
     max_retries = 5
     retries = 0
-    output_directory = kwargs.get("output_directory")
 
     if not isinstance(output_directory, str):
-        logging.error("Invalid 'output_directory' parameter.")
+        logger.error("Invalid 'output_directory' parameter.")
         return
 
     while retries < max_retries:
         try:
-            logging.info("Starting Chrome and scraping image from Vexels.")
+            logger.info("Starting Chrome and scraping image from Vexels.")
             driver = start_chrome("Default", None)
             active_drivers.append(driver)
             image_file_path = _scrape_vexels_image(driver)
             if image_file_path is None:
                 raise AbortScriptError("Error scraping the image from vexels.com")
-            driver.quit()
-            active_drivers.remove(driver)
+            if driver:
+                driver.quit()
+                active_drivers.remove(driver)
 
-            logging.info("Starting ChatGPT session and generating image.")
+            logger.info("Starting ChatGPT session and generating image.")
             chatgpt_driver = _start_chat_gpt()
             active_drivers.append(chatgpt_driver)
             _start_generating(chatgpt_driver, output_directory, image_file_path)
             active_drivers.remove(chatgpt_driver)
 
-            logging.info("Image generation completed successfully.")
+            logger.info("Image generation completed successfully.")
             break
 
         except AbortScriptError as err:
-            logging.error("An error occurred: %s", err)
+            logger.error("An error occurred: %s", err)
             err.close_all_drivers()
             retries += 1
-            logging.info(
+            logger.info(
                 "Restarting the process due to an unexpected error... (%d/%d)",
                 retries,
                 max_retries,
@@ -762,12 +828,12 @@ def generate_image_selenium_gpt(**kwargs: dict[str, Any]) -> None:
             time.sleep(5)
 
         except Exception as err:
-            logging.error("An unexpected error occurred: %s", err)
+            logger.error("An unexpected error occurred: %s", err)
             for driver in active_drivers:
                 driver.quit()
             active_drivers.clear()
             retries += 1
-            logging.info(
+            logger.info(
                 "Restarting the process due to an unexpected error... (%d/%d)",
                 retries,
                 max_retries,
@@ -775,4 +841,4 @@ def generate_image_selenium_gpt(**kwargs: dict[str, Any]) -> None:
             time.sleep(5)
 
     else:
-        logging.error("Max retries reached. Exiting the process.")
+        logger.error("Max retries reached. Exiting the process.")
