@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (C) 2024
 # Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
@@ -23,8 +24,9 @@ from __future__ import annotations
 import logging
 import re
 from time import sleep
+from typing import Any
 
-import undetected_chromedriver as uc  # type: ignore[import]
+import undetected_chromedriver as uc
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
     ElementNotInteractableException,
@@ -82,7 +84,6 @@ def _wait_and_click(
     :param timeout: The maximum time to wait in seconds, defaults to 30.
     :type timeout: int, optional
     """
-
     try:
         WebDriverWait(driver, timeout).until(
             ec.element_to_be_clickable((by, selector)),
@@ -144,19 +145,22 @@ def _check_not_available_names(
             input_field = driver.find_element(By.ID, input_field_id)
             driver.execute_script("arguments[0].value = '';", input_field)
             driver.execute_script(
-                "arguments[0].value = arguments[1];", input_field, text
+                "arguments[0].value = arguments[1];",
+                input_field,
+                text,
             )
 
             # Trigger necessary events
             for event in ["input", "change", "blur", "keyup"]:
                 driver.execute_script(
-                    f"arguments[0].dispatchEvent(new Event('{event}'));", input_field
+                    f"arguments[0].dispatchEvent(new Event('{event}'));",
+                    input_field,
                 )
 
             # Wait for error message to disappear
             WebDriverWait(driver, 15).until(
                 ec.invisibility_of_element_located(
-                    (By.CSS_SELECTOR, error_info_selector)
+                    (By.CSS_SELECTOR, error_info_selector),
                 ),
             )
 
@@ -177,7 +181,7 @@ def _check_not_available_names(
             # Wait for error message to disappear
             WebDriverWait(driver, 15).until(
                 ec.invisibility_of_element_located(
-                    (By.CSS_SELECTOR, error_info_selector)
+                    (By.CSS_SELECTOR, error_info_selector),
                 ),
             )
 
@@ -189,7 +193,8 @@ def _check_not_available_names(
 
     except TimeoutException:
         logger.error(
-            "Error message did not disappear after correction for %s", str(field_type)
+            "Error message did not disappear after correction for %s",
+            str(field_type),
         )
         return False, text  # Correction failed
 
@@ -205,7 +210,8 @@ def _setup_tags(driver: uc.Chrome, tags: str | list[str]) -> None:
     :type tags: Union[str, list[str]]
     """
     input_element = driver.find_element(
-        By.CSS_SELECTOR, "div.dropdown-button input.dropdown-input"
+        By.CSS_SELECTOR,
+        "div.dropdown-button input.dropdown-input",
     )
 
     # Clear existing tags
@@ -308,7 +314,7 @@ def _upload_image(driver: uc.Chrome, image_path: str) -> bool:
     try:
         wait.until(
             ec.visibility_of_element_located(
-                (By.CSS_SELECTOR, ".preview-image-loader")
+                (By.CSS_SELECTOR, ".preview-image-loader"),
             ),
         )
     except TimeoutException:
@@ -466,7 +472,7 @@ def _input_details(
     title: str,
     description: str,
     tag: str,
-) -> tuple[list, str]:
+) -> tuple[Any, str]:
     """Inputs the title, description, and tags.
 
     :param driver: The WebDriver instance.
@@ -529,10 +535,14 @@ def _correct_fields(
     while True:
         title_corrected, title = _check_not_available_names(driver, title, "title")
         description_corrected, description = _check_not_available_names(
-            driver, description, "description"
+            driver,
+            description,
+            "description",
         )
         tags_corrected, tags_string = _check_not_available_names(
-            driver, tags_string, "tags"
+            driver,
+            tags_string,
+            "tags",
         )
         if not (title_corrected or description_corrected or tags_corrected):
             break
@@ -541,7 +551,7 @@ def _correct_fields(
 
 def _select_language_and_publish(
     driver: uc.Chrome,
-    more_languages_button: list,
+    more_languages_button: Any,
 ) -> None:
     """Selects the language and publishes the design.
 

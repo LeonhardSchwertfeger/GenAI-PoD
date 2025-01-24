@@ -17,21 +17,17 @@ Prerequisites
 Clone the Repository
 --------------------
 
-.. code-block:: bash
-
-   git clone https://github.com/LeonhardSchwertfeger/GenAI-PoD.git
-
-Create a Virtual Environment (Recommended)
-------------------------------------------
+Create a Virtual Environment
+----------------------------
 
 .. code-block:: bash
 
-   python -m venv venv
-   source venv/bin/activate  # On Windows use ``venv\\Scripts\\activate```
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows use .\venv\Scripts\activate
 
-Install Optional Dependencies
------------------------------
+Install GenAI-PoD
+-----------------
 
 .. code-block:: bash
 
-   pip install -e ".[dev,test]"
+   pip install genai-pod

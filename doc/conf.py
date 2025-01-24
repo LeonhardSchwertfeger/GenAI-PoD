@@ -58,7 +58,7 @@ html_context = {
     "display_github": True,
     "github_user": "LeonhardSchwertfeger",
     "github_repo": "GenAI-PoD",
-    "github_version": "master/docs/",
+    "github_version": "master/doc/",
 }
 html_theme_options = {
     "collapse_navigation": False,

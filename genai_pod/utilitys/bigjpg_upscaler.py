@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (C) 2024
 # Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
@@ -20,13 +21,12 @@ Logs provide detailed information about the process, aiding in debugging and mon
 from __future__ import annotations
 
 import logging
-import subprocess  # noqa: S404
+import subprocess
 from base64 import b64decode
 from io import BytesIO
 from pathlib import Path
 from shutil import which
 from time import sleep, time
-from typing import Any
 
 from PIL import Image
 from requests import RequestException, exceptions, get
@@ -39,27 +39,26 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def start_tor(tor_binary_path: str | None) -> subprocess.Popen:
+def start_tor(tor_binary_path: str | None) -> subprocess.Popen[bytes]:
     """Starts the Tor service by calling the Tor executable.
 
     :return: The process object representing the running Tor service.
     :rtype: subprocess.Popen
     """
-
     if tor_binary_path is None:
         import platform
 
         if platform.machine().lower() == "aarch64" and tor_binary_path is None:
             logging.warning(
                 "Tor binary path not set. Please use the command "
-                "'genai setting_tor_binary --path' to set one."
+                "'genai setting_tor_binary --path' to set one.",
             )
             logging.info(
                 "aarch64 has an unofficial Tor binary. I recommend the Tor binary from "
-                "https://sourceforge.net/projects/tor-browser-ports/files/13.0.9/"
+                "https://sourceforge.net/projects/tor-browser-ports/files/13.0.9/",
             )
             logging.debug(
-                "Continue with 'which('tor')', but this could now cause errors!"
+                "Continue with 'which('tor')', but this could now cause errors!",
             )
     tor_binary_path = tor_binary_path or which("tor")
 
@@ -77,8 +76,7 @@ def start_tor(tor_binary_path: str | None) -> subprocess.Popen:
 
 
 def wait_for_tor(timeout: int = 60) -> None:
-    """
-    Test the session with get request with SOCKS5-Proxy on https://check.torproject.org.
+    """Test the session with get request with SOCKS5-Proxy on https://check.torproject.org.
     :param timeout: the time till timeout
     :type timeout: int
     """
@@ -110,7 +108,7 @@ def wait_for_tor(timeout: int = 60) -> None:
         sleep(2)
 
 
-def stop_tor(tor_process: subprocess.Popen) -> None:
+def stop_tor(tor_process: subprocess.Popen[bytes]) -> None:
     """Stop the Tor service by terminating the process.
 
     :param tor_process: The process object representing the Tor service.
@@ -198,14 +196,16 @@ def check_warning_modal(driver: webdriver.Chrome) -> str:
     :rtype: str
     """
     warning = next(
-        iter(driver.find_elements(By.CSS_SELECTOR, "#modal_alert .modal-title")), None
+        iter(driver.find_elements(By.CSS_SELECTOR, "#modal_alert .modal-title")),
+        None,
     )
     if warning and warning.text == "Warnung":
         logger.warning("Warning modal detected!")
         return "warning"
 
     error = driver.find_elements(
-        By.CSS_SELECTOR, 'div.pic_mask.danger[style="display: block;"]'
+        By.CSS_SELECTOR,
+        'div.pic_mask.danger[style="display: block;"]',
     )
     if error:
         logger.error("Image is too big!")
@@ -224,7 +224,7 @@ def upload_image(driver: webdriver.Chrome, image_path: str) -> None:
     """
     import os
 
-    driver.execute_script(
+    driver.execute_script(  # type: ignore[no-untyped-call]
         """
         const input = document.getElementById('fileupload');
         input.style.display = 'block';
@@ -241,7 +241,7 @@ def initiate_upscaling(driver: webdriver.Chrome) -> None:
     :param driver: The Selenium WebDriver instance.
     :type driver: webdriver.Chrome
     """
-    driver.execute_script(
+    driver.execute_script(  # type: ignore[no-untyped-call]
         """
         const checkStartButtonOrDownload = setInterval(() => {
             const startButton = document.querySelector(
@@ -282,8 +282,8 @@ def monitor_progress(driver: webdriver.Chrome) -> str | None:
         - None if an unexpected issue occurs.
     :raises Exception: If the progress is stuck at 0% for over 1 minute.
     """
-    zero_start = None
-    below_start = None
+    zero_start: float | None = None
+    below_start: float | None = None
     with tqdm(
         total=100,
         desc="Progress",
@@ -291,7 +291,7 @@ def monitor_progress(driver: webdriver.Chrome) -> str | None:
         dynamic_ncols=True,
     ) as pbar:
         while True:
-            width = driver.execute_script(
+            width: str = driver.execute_script(  # type: ignore[no-untyped-call]
                 'return document.querySelector(".progress-bar-primary")?.style.width;',
             )
             percent = int(width.strip("%")) if width else 0
@@ -305,7 +305,9 @@ def monitor_progress(driver: webdriver.Chrome) -> str | None:
                 if zero_start is None:
                     zero_start = time()
                 elif time() - zero_start >= 60:
-                    raise Exception("Stuck for over 1min at 0%.")
+                    raise Exception(
+                        "Stuck for over 1min at 0%.",
+                    )
             else:
                 zero_start = None
 
@@ -313,7 +315,9 @@ def monitor_progress(driver: webdriver.Chrome) -> str | None:
                 if below_start is None:
                     below_start = time()
                 elif time() - below_start >= 240:
-                    raise Exception("Stuck for 4 minutes under 100%.")
+                    raise Exception(
+                        "Stuck for 4 minutes under 100%.",
+                    )
             else:
                 below_start = None
 
@@ -326,7 +330,7 @@ def monitor_progress(driver: webdriver.Chrome) -> str | None:
             sleep(1)
 
 
-def get_download_url(driver: webdriver.Chrome) -> Any:
+def get_download_url(driver: webdriver.Chrome) -> str | None:
     """Retrieve the download URL of the upscaled image.
 
     :param driver: The Selenium WebDriver instance.
@@ -334,7 +338,7 @@ def get_download_url(driver: webdriver.Chrome) -> Any:
     :return: The download URL if available, None otherwise.
     :rtype: str or None
     """
-    return driver.execute_script(
+    return driver.execute_script(  # type: ignore[no-untyped-call,no-any-return]
         """
         const downloadLink = document.querySelector(
             'a.btn.btn-sm.btn-success.big_download'
@@ -380,8 +384,10 @@ def upscale_bigjpg(image_path: str, out_dir: Path) -> str | None:
                 if download_url:
                     result = str(
                         _download_and_process_image(
-                            download_url, f"{Path(image_path).stem}_upscaled", out_dir
-                        )
+                            download_url,
+                            f"{Path(image_path).stem}_upscaled",
+                            out_dir,
+                        ),
                     )
                     break
                 logger.error("Download URL not found.")
@@ -454,12 +460,14 @@ def navigate_to_bigjpg(driver: webdriver.Chrome) -> None:
         driver.set_page_load_timeout(30)
     except exceptions.Timeout as exc:
         raise TimeoutError(
-            "The page couldn't be loaded within the expected time."
+            "The page couldn't be loaded within the expected time.",
         ) from exc
 
 
 def upscale(
-    image_path: str, output_directory: Path, tor_binary_path: str | None
+    image_path: str,
+    output_directory: Path,
+    tor_binary_path: str | None,
 ) -> str | None:
     """Main function to upscale an image using the Bigjpg service.
 
@@ -485,7 +493,7 @@ def upscale(
                 return result
             if result == image_path:
                 logger.error(
-                    "Upscaling aborted due to oversized image or repeated warnings."
+                    "Upscaling aborted due to oversized image or repeated warnings.",
                 )
                 return result
 

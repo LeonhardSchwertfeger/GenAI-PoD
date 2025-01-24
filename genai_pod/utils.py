@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (C) 2024
 # Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
@@ -25,7 +26,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import undetected_chromedriver as uc  # type: ignore[import]
+import undetected_chromedriver as uc
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -48,10 +49,10 @@ class UploadConfig:
     """
 
     upload_path: str
-    upload_function: Callable[..., Any]
+    upload_function: Callable[..., bool]
     used_folder_name: str
     error_folder_name: str
-    exclude_folders: list[str]
+    exclude_folders: list[str] | None
 
 
 def start_chrome(chrome_profile: str, output_directory: Path | None) -> uc.Chrome:
@@ -113,7 +114,9 @@ def _create_profile_directory(user_data_dir: Path, profile_name: str) -> None:
 
 
 def _prepare_profile_directory(
-    user_data_dir: Path, chrome_profile: str, output_directory: Path | None
+    user_data_dir: Path,
+    chrome_profile: str,
+    output_directory: Path | None,
 ) -> tuple[Path, str]:
     """Prepares the directory structure for the specified Chrome profile.
 
@@ -156,7 +159,9 @@ def _clear_session_files(profile_dir: Path) -> None:
 
 
 def _build_chrome_options(
-    user_data_dir: Path, profile_name: str, output_directory: Path | None
+    user_data_dir: Path,
+    profile_name: str,
+    output_directory: Path | None,
 ) -> uc.ChromeOptions:
     """Constructs and configures ChromeOptions for undetected_chromedriver.
 
@@ -214,7 +219,7 @@ def _launch_chrome(chrome_options: uc.ChromeOptions) -> uc.Chrome:
         if not os.path.exists(path):
             logger.error(
                 "You have an aarch64 Architecture. "
-                "Please follow the steps in aarch64_README.md!"
+                "Please follow the steps in aarch64_README.md!",
             )
             sys.exit(0)
         return uc.Chrome(options=chrome_options, driver_executable_path=path)
@@ -407,7 +412,9 @@ def process_subdir(
         move(str(subdir), base_path / target_folder)
         if success:
             logger.debug(
-                "Successfully uploaded %s. Moving to %s.", subdir, target_folder
+                "Successfully uploaded %s. Moving to %s.",
+                subdir,
+                target_folder,
             )
         else:
             logger.error("Upload failed for folder %s.", subdir)
@@ -535,13 +542,17 @@ def pilling_image(image_path: str) -> None:
     1. Opens the image and converts it to RGBA mode for transparency handling.
     2. Converts the image into a NumPy array for efficient processing.
     3. Creates masks based on the alpha (transparency) values of the pixels.
-       - Pixels with alpha greater than 153 (more than 60% opacity) are adjusted.
-       - Pixels with alpha 153 or less (60% or less opacity) are made fully transparent.
-    4. Adjusts the RGB values of the pixels with high opacity, blending them with white background.
+       - Pixels with alpha greater than 153 (more than 60% opacity) are
+         adjusted.
+       - Pixels with alpha 153 or less (60% or less opacity) are made fully
+         transparent.
+    4. Adjusts the RGB values of the pixels with high opacity, blending them
+       with white background.
     5. Sets the alpha channel of adjusted pixels to full opacity (255).
-    6. Saves the modified image as a new PNG file with "_customised" added to the original filename.
+    6. Saves the modified image as a new PNG file with "_customized" added to
+       the original filename.
     """
-    import numpy as np  # type: ignore[import]
+    import numpy as np
 
     image = Image.open(image_path).convert("RGBA")
     image_array = np.array(image).astype(np.float32)

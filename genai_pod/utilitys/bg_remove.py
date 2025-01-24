@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (C) 2024
 # Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
@@ -28,7 +29,7 @@ import os
 from pathlib import Path
 from time import sleep
 
-import undetected_chromedriver as uc  # type: ignore[import]
+import undetected_chromedriver as uc
 from selenium.common.exceptions import (
     ElementNotVisibleException,
     NoSuchElementException,
@@ -109,11 +110,12 @@ def run_bg_remove(image_path: str) -> Path:
         try:
             dialog = WebDriverWait(driver, 5).until(
                 ec.presence_of_element_located(
-                    (By.XPATH, "//dialog[@aria-modal='true']")
+                    (By.XPATH, "//dialog[@aria-modal='true']"),
                 ),
             )
             dialog.find_element(
-                By.XPATH, ".//button[contains(text(), 'Close')]"
+                By.XPATH,
+                ".//button[contains(text(), 'Close')]",
             ).click()
             WebDriverWait(driver, 5).until(ec.staleness_of(dialog))
         except Exception:
@@ -127,7 +129,7 @@ def run_bg_remove(image_path: str) -> Path:
                     (
                         By.XPATH,
                         "//button[contains(@class, 'rounded-full') and contains(., 'Bild wählen')]",
-                    )
+                    ),
                 ),
             )
 
@@ -150,7 +152,7 @@ def run_bg_remove(image_path: str) -> Path:
             try:
                 download_button = WebDriverWait(driver, 100).until(
                     ec.element_to_be_clickable(
-                        (By.XPATH, "//button[.//div[text()='Download']]")
+                        (By.XPATH, "//button[.//div[text()='Download']]"),
                     ),
                 )
                 sleep(2)
@@ -159,7 +161,8 @@ def run_bg_remove(image_path: str) -> Path:
                 break
             except (NoSuchElementException, ElementNotVisibleException) as err:
                 logger.debug(
-                    "Attempt %s failed to click the download button.", attempt + 1
+                    "Attempt %s failed to click the download button.",
+                    attempt + 1,
                 )
                 if attempt == 1:
                     raise AbortScriptError(

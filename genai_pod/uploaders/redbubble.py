@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (C) 2024
 # Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
@@ -29,6 +30,7 @@ import sys
 from json import load
 from pathlib import Path
 from shutil import move
+from typing import Any
 
 from PIL import Image
 from selenium.common.exceptions import (
@@ -39,7 +41,7 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from seleniumbase import SB  # type: ignore[import]
+from seleniumbase import SB
 from tqdm import tqdm
 
 from genai_pod.utils import chromedata
@@ -47,7 +49,7 @@ from genai_pod.utils import chromedata
 logger = logging.getLogger(__name__)
 
 
-def upload_redbubble(**kwargs) -> None:
+def upload_redbubble(**kwargs: dict[str, Any]) -> None:
     """Main function to initialize the browser and start uploading designs to Redbubble.
 
     :param **kwargs: Keyword arguments, expecting 'upload_path' key specifying the path
@@ -55,8 +57,8 @@ def upload_redbubble(**kwargs) -> None:
     :type kwargs: dict[str, Any]
     """
     try:
-        upload_path = kwargs.get("upload_path")
-        if not upload_path:
+        upload_path: str
+        if not (upload_path := kwargs.get("upload_path", "")):  # type: ignore[assignment]
             logger.error("upload_path not provided in kwargs.")
             return
 
@@ -71,7 +73,7 @@ def upload_redbubble(**kwargs) -> None:
         ) as sb:
             logger.debug("Browser launched with specified user data directory.")
             sb.open(
-                "https://www.redbubble.com/portfolio/images/new?ref=account-nav-dropdown"
+                "https://www.redbubble.com/portfolio/images/new?ref=account-nav-dropdown",
             )
 
             # Time to login manually for the first time
@@ -187,7 +189,7 @@ def _close_overlays(sb: SB) -> None:
         logger.warning("Failed to close modal dialog overlay: %s", str(e))
 
 
-def _load_config(filename: str | Path) -> dict:
+def _load_config(filename: str | Path) -> dict[str, Any]:
     """Load configuration settings from a JSON file.
 
     :param filename: The path to the JSON configuration file.
@@ -196,12 +198,11 @@ def _load_config(filename: str | Path) -> dict:
     :rtype: dict | list
     """
     with Path(filename).open(encoding="utf-8") as file:
-        return load(file)
+        return load(file)  # type:ignore[no-any-return]
 
 
 def _setup_clothes(sb: SB, base_scaling: str) -> None:
-    """
-    Select products and adjust their design sizes on Redbubble
+    """Select products and adjust their design sizes on Redbubble
     based on base scaling from the JSON.
 
     :param sb: The SeleniumBase instance.
@@ -213,7 +214,7 @@ def _setup_clothes(sb: SB, base_scaling: str) -> None:
     scaling_adjustments = _load_config(
         Path(__file__).parent.absolute().parent
         / "resources"
-        / "scaling_adjustments.json"
+        / "scaling_adjustments.json",
     )
 
     if base_scaling in scaling_adjustments:
@@ -451,7 +452,7 @@ def _find_and_adjust_design_size(sb: SB, data_type: str) -> str | None:
         parent_divs = sb.find_elements(f"div.image-box[data-type='{data_type}']")
 
         if parent_divs:
-            return parent_divs[0].get_attribute("class")
+            return parent_divs[0].get_attribute("class")  # type: ignore[no-any-return]
         logger.warning("No suitable div element found for data type '%s'.", data_type)
         return None
     except Exception:
@@ -553,7 +554,7 @@ def _upload_with_selenium(
 
 def iterate_and_upload(
     sb: SB,
-    upload_path: str,
+    upload_path: str | Path,
     folder: str,
     error_folder: str,
 ) -> None:
@@ -563,7 +564,7 @@ def iterate_and_upload(
     :param sb: SeleniumBase instance used for browser interactions.
     :type sb: SB
     :param upload_path: Path containing folders with designs to upload.
-    :type upload_path: str
+    :type upload_path: str | Path
     :param folder: Destination folder for successful uploads.
     :type folder: str
     :param error_folder: Destination folder for failed uploads.
@@ -584,7 +585,7 @@ def iterate_and_upload(
 
     if not subdirs:
         logger.warning(
-            "No subdirectories found to process. Exiting iterate_and_upload."
+            "No subdirectories found to process. Exiting iterate_and_upload.",
         )
         return
 
@@ -598,7 +599,11 @@ def iterate_and_upload(
 
 
 def process_subdir(
-    subdir: Path, base_path: Path, folder: str, error_folder: str, sb: SB
+    subdir: Path,
+    base_path: Path,
+    folder: str,
+    error_folder: str,
+    sb: SB,
 ) -> bool:
     """Processes a single subdirectory by validating required files and attempting to upload
     its content.

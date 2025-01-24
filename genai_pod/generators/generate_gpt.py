@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (C) 2024
 # Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
@@ -23,7 +24,7 @@ from secrets import choice, randbelow
 from tempfile import NamedTemporaryFile
 from time import sleep
 
-import undetected_chromedriver as uc  # type: ignore[import]
+import undetected_chromedriver as uc
 from PIL import Image
 from pytz import timezone
 from requests import get
@@ -60,7 +61,6 @@ def _start_chat_gpt() -> uc.Chrome:
     :return: The uc.Chrome instance.
     :rtype: uc.Chrome
     """
-
     driver = start_chrome("ChatGPT", None)
     active_drivers.append(driver)
 
@@ -70,7 +70,8 @@ def _start_chat_gpt() -> uc.Chrome:
     logger.debug("Waiting for login page to load.")
 
     if _is_element_present(
-        driver, "//*[contains(text(), 'Log in with your OpenAI account to continue')]"
+        driver,
+        "//*[contains(text(), 'Log in with your OpenAI account to continue')]",
     ):
         logger.warning("Login page detected. Please log in manually.")
         _wait_for_element(driver, "//div[@id='chatgpt-interface']", 300)
@@ -127,7 +128,8 @@ def _get_image_src(driver: uc.Chrome) -> str:
     try:
         image_divs: list[WebElement] = WebDriverWait(driver, 50).until(
             lambda d: d.find_elements(
-                By.CSS_SELECTOR, "div[class*='group/dalle-image aspect']"
+                By.CSS_SELECTOR,
+                "div[class*='group/dalle-image aspect']",
             ),
         )
 
@@ -234,7 +236,7 @@ def _gpt_send_prompt(driver: uc.Chrome) -> None:
     try:
         WebDriverWait(driver, 600).until(
             ec.element_to_be_clickable(
-                (By.CSS_SELECTOR, "[data-testid='send-button']")
+                (By.CSS_SELECTOR, "[data-testid='send-button']"),
             ),
         ).click()
     except (TimeoutException, NoSuchElementException) as err:
@@ -253,7 +255,7 @@ def _bad_gateway(driver: uc.Chrome) -> bool:
     try:
         if WebDriverWait(driver, 50).until(
             ec.presence_of_element_located(
-                (By.CSS_SELECTOR, ".cf-error-details.cf-error-502")
+                (By.CSS_SELECTOR, ".cf-error-details.cf-error-502"),
             ),
         ):
             logger.warning("The web server reported a bad gateway error.")
@@ -290,7 +292,10 @@ def _gpt_type_text(driver: uc.Chrome, text: str) -> None:
 
 
 def _process_image(
-    image_url: str, image_dir: str, title: str, tor_binary_path: str | None
+    image_url: str,
+    image_dir: str,
+    title: str,
+    tor_binary_path: str | None,
 ) -> Path:
     """Process and save an image from a given URL, remove its background, and then upscale it.
 
@@ -310,39 +315,42 @@ def _process_image(
 
     image_response = get(image_url, timeout=60)
     image_response.raise_for_status()
-    image = Image.open(BytesIO(image_response.content))
+    with Image.open(BytesIO(image_response.content)) as image:
+        try:
+            sanitized_title = sub(r"\W", "_", title)[:10]
+            title_hash = sha256(title.encode()).hexdigest()[:8]
+            output_directory = Path(image_dir) / f"{sanitized_title}_{title_hash}"
 
-    sanitized_title = sub(r"\W", "_", title)[:10]
-    title_hash = sha256(title.encode()).hexdigest()[:8]
-    output_directory = Path(image_dir) / f"{sanitized_title}_{title_hash}"
+            output_directory.mkdir(parents=True, exist_ok=True)
 
-    output_directory.mkdir(parents=True, exist_ok=True)
+            raw_image_path = output_directory / f"{title}-bg.png"
+            image.save(raw_image_path)
 
-    raw_image_path = output_directory / f"{title}-bg.png"
-    image.save(raw_image_path)
+            logger.info("Removing Background...")
+            bg_removed_image_path = bg_remove(str(raw_image_path))
 
-    logger.info("Removing Background...")
-    bg_removed_image_path = bg_remove(str(raw_image_path))
+            logger.info("Upscaling for 2k image...")
+            upscaled_image_path = upscale(
+                str(bg_removed_image_path),
+                Path(output_directory),
+                tor_binary_path,
+            )
 
-    logger.info("Upscaling for 2k image...")
-    upscaled_image_path = upscale(
-        str(bg_removed_image_path), Path(output_directory), tor_binary_path
-    )
+            logger.info("Upscaling for 4k image...")
+            upscaled_image_path2 = upscale(
+                str(upscaled_image_path),
+                Path(output_directory),
+                tor_binary_path,
+            )
 
-    logger.info("Upscaling for 4k image...")
-    upscaled_image_path2 = upscale(
-        str(upscaled_image_path), Path(output_directory), tor_binary_path
-    )
-
-    if upscaled_image_path2:
-        logger.info("Pilling image...")
-        pilling_image(str(upscaled_image_path2))
-        os.remove(Path(upscaled_image_path2))
-
-    os.remove(str(bg_removed_image_path))
-    os.remove(str(upscaled_image_path))
-    os.remove(str(raw_image_path))
-    image.close()
+            if upscaled_image_path2:
+                logger.info("Pilling image...")
+                pilling_image(str(upscaled_image_path2))
+        except:  # pylint: disable=try-except-raise # noqa: disable=bare-except
+            raise
+        finally:
+            for file_ in (bg_removed_image_path, upscaled_image_path, raw_image_path):
+                os.remove(str(file_))
 
     return output_directory
 
@@ -399,7 +407,8 @@ def _handle_usage_limit(driver: uc.Chrome) -> None:
     if "Versuche es erneut after" in error_text:
         try:
             target_time = _calculate_target_time(
-                error_text.split("after")[1].split()[0], error_text
+                error_text.split("after")[1].split()[0],
+                error_text,
             )
             _wait_until_time(target_time)
         except ValueError as e:
@@ -509,14 +518,13 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
     :rtype: str | None
     :raises AbortScriptError: If scraping fails.
     """
-
     try:
         driver.set_page_load_timeout(60)
         driver.get(f"https://de.vexels.com/nischen/lustig/{randbelow(30) + 1}/")
         active_drivers.append(driver)
 
         WebDriverWait(driver, 60).until(
-            ec.presence_of_all_elements_located((By.CLASS_NAME, "vx-grid-asset"))
+            ec.presence_of_all_elements_located((By.CLASS_NAME, "vx-grid-asset")),
         )
 
         forbidden_words_path = (
@@ -540,14 +548,17 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
 
             try:
                 container = asset.find_element(
-                    By.CSS_SELECTOR, ".vx-grid-asset-container.d-block.h-100"
+                    By.CSS_SELECTOR,
+                    ".vx-grid-asset-container.d-block.h-100",
                 )
 
                 img_title_element = container.find_element(
-                    By.CSS_SELECTOR, ".title-container h3.text"
+                    By.CSS_SELECTOR,
+                    ".title-container h3.text",
                 )
                 img_title = driver.execute_script(
-                    "return arguments[0].textContent;", img_title_element
+                    "return arguments[0].textContent;",
+                    img_title_element,
                 ).strip()
                 logger.info("Found image title: %s", img_title)
 
@@ -561,7 +572,8 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
                     continue
 
                 img_element = container.find_element(
-                    By.CSS_SELECTOR, ".vx-grid-figure img.vx-grid-thumb"
+                    By.CSS_SELECTOR,
+                    ".vx-grid-figure img.vx-grid-thumb",
                 )
                 img_src = img_element.get_attribute("src")
 
@@ -586,7 +598,9 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
                     driver = uc.Chrome()
                     continue
                 logger.warning(
-                    "Error processing asset on attempt %d: %s", attempt + 1, str(e)
+                    "Error processing asset on attempt %d: %s",
+                    attempt + 1,
+                    str(e),
                 )
                 continue
 
@@ -603,7 +617,10 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
 
 
 def _start_generating(
-    driver: uc.Chrome, image_dir: str, image_file_path: str, tor_binary_path: str | None
+    driver: uc.Chrome,
+    image_dir: str,
+    image_file_path: str,
+    tor_binary_path: str | None,
 ) -> None:
     """Start generating an image using GPT and save it to a specified directory.
 
@@ -694,7 +711,7 @@ def _start_generating(
     try:
         WebDriverWait(driver, 600).until(
             ec.element_to_be_clickable(
-                (By.CSS_SELECTOR, "[data-testid='send-button']")
+                (By.CSS_SELECTOR, "[data-testid='send-button']"),
             ),
         )
     except (TimeoutException, NoSuchElementException) as err:
@@ -717,17 +734,14 @@ def _start_generating(
 
 
 def generate_image_selenium_gpt(
-    output_directory: str, tor_binary_path: str | None
+    output_directory: str,
+    tor_binary_path: str | None,
 ) -> None:
     """Main function to start the GPT generating process."""
     import time
 
     max_retries = 5
     retries = 0
-
-    if not isinstance(output_directory, str):
-        logger.error("Invalid 'output_directory' parameter.")
-        return
 
     while retries < max_retries:
         try:
@@ -745,7 +759,10 @@ def generate_image_selenium_gpt(
             chatgpt_driver = _start_chat_gpt()
             active_drivers.append(chatgpt_driver)
             _start_generating(
-                chatgpt_driver, output_directory, image_file_path, tor_binary_path
+                chatgpt_driver,
+                output_directory,
+                image_file_path,
+                tor_binary_path,
             )
             active_drivers.remove(chatgpt_driver)
 

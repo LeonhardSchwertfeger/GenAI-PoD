@@ -128,8 +128,14 @@ exclude = ["scripts/*.py", "genai_pod/impulse/*"]
 line-length = 100
 cache-dir = ".cache/ruff"
 
+lint.ignore = [
+    "PLR2004", # Magic value in comparison
+    "S404", # possibly insecure
+]
+
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["E501", "F841", "N802", "S101", "S106", "S110", "TID252"]
+"tests/*.py" = ["E501", "F841", "N802", "S101", "S106", "S110", "TID252", "S404"]
+
 
 [tool.mypy]
 cache_dir = ".cache/mypy"

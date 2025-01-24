@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (C) 2024
 # Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
@@ -14,15 +15,7 @@ import sys
 from typing import TYPE_CHECKING, Any
 
 import click
-from cloup import (  # type: ignore[import]
-    STRING,
-    Choice,
-    argument,
-    group,
-    option,
-    pass_context,
-    version_option,
-)
+from cloup import STRING, Choice, argument, group, option, pass_context, version_option
 
 if TYPE_CHECKING:
     from cloup import Context
@@ -77,7 +70,7 @@ def generate(ctx: Context, output_directory: str) -> None:
     required=False,
 )
 @pass_context
-def generategpt(ctx: Context, tor_binary_path) -> None:
+def generategpt(ctx: Context, tor_binary_path: str | click.Path) -> None:
     """Use GPT to generate images via Selenium."""
     from genai_pod.generators.generate_gpt import (
         AbortScriptError,
