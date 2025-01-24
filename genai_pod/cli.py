@@ -15,7 +15,7 @@ import sys
 from typing import TYPE_CHECKING, Any
 
 import click
-from cloup import STRING, Choice, argument, group, option, pass_context, version_option
+from cloup import STRING, Choice, argument, group, option, pass_context
 
 if TYPE_CHECKING:
     from cloup import Context
@@ -23,8 +23,30 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def print_version(
+    ctx: Context,
+    param: Any,  # pylint: disable=unused-argument
+    value: Any,  # noqa: ANN401, ARG001
+) -> None:
+    """Prints the version of the package"""
+    if not value or ctx.resilient_parsing:
+        return
+    from importlib.metadata import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+        version,
+    )
+
+    click.echo(version("genai_pod"))
+    ctx.exit()
+
+
 @group()
-@version_option(message="%version%")
+@option(
+    "--version",
+    is_flag=True,
+    callback=print_version,
+    expose_value=False,
+    is_eager=True,
+)
 @pass_context
 def cli(ctx: Context, **kwargs: Any) -> None:
     """Main entry point for the command-line application.
