@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (C) 2024
 # Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
@@ -13,18 +14,13 @@ import logging
 import sys
 from typing import TYPE_CHECKING, Any
 
-from click import echo
-from cloup import (  # type: ignore[import]
-    STRING,
-    Choice,
-    argument,
-    group,
-    option,
-    pass_context,
-)
+import click
+from cloup import STRING, Choice, argument, group, option, pass_context
 
 if TYPE_CHECKING:
     from cloup import Context
+
+logger = logging.getLogger(__name__)
 
 
 def print_version(
@@ -39,7 +35,7 @@ def print_version(
         version,
     )
 
-    echo(version("genai_pod"))
+    click.echo(version("genai_pod"))
     ctx.exit()
 
 
@@ -83,15 +79,27 @@ def generate(ctx: Context, output_directory: str) -> None:
 
 
 @generate.command()
+@option(
+    "--tor-binary-path",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+    ),
+    help="Path to the Tor binary.",
+    required=False,
+)
 @pass_context
-def generategpt(ctx: Context, **kwargs: Any) -> None:
+def generategpt(ctx: Context, tor_binary_path: str | click.Path) -> None:
     """Use GPT to generate images via Selenium."""
     from genai_pod.generators.generate_gpt import (
         AbortScriptError,
         generate_image_selenium_gpt,
     )
 
-    ctx.obj |= kwargs
+    ctx.obj |= {"tor_binary_path": tor_binary_path}
     while True:
         try:
             generate_image_selenium_gpt(**ctx.obj)
@@ -151,12 +159,12 @@ def verifysite(profile_name: str) -> None:
 
     site = profile_to_site.get(profile_name.lower())
     if site is None:
-        logging.error("Unknown profile name: %s", profile_name)
+        logger.error("Unknown profile name: %s", profile_name)
         sys.exit(1)
 
     try:
         verify(profile_name, site)
-        logging.info("Browser successfully opened for %s at %s.", profile_name, site)
-    except Exception:
-        logging.exception("Exception while starting chrome")
+        logger.info("Browser successfully opened for %s at %s.", profile_name, site)
+    except Exception as e:
+        logger.exception("Exception while starting chrome %s", e)
         sys.exit(1)

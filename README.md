@@ -1,6 +1,6 @@
 # GenAI-PoD: Your Command-Line Solution for AI Image Generation & Webshop Automation
 
-> **Automate your entire print-on-demand workflow— from AI-driven image creation
+> **Automate your entire print-on-demand workflow, from AI-driven image creation
 > to uploads on leading platforms like Spreadshirt & Redbubble.**
 
 <div align="center">
@@ -88,23 +88,15 @@ popular print-on-demand (POD) platforms such as **Spreadshirt** and
 
 ## Installation
 
-1. **Clone the Repository**
+```bash
+python3 -m venv venv
+source venv/bin/activate # Windows: .\venv\Scripts\activate
 
-   ```bash
-   git clone https://github.com/LeonhardSchwertfeger/genai-pod.git
-   ```
+pip3 install genai-pod
 
-2. **Create a Virtual Environment (Recommended)**
-
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
-
-3. **Install Dependencies** Install required Python packages:
-   ```bash
-   pip install -e ".[dev,test]" # On Windows use `make dev`
-   ```
+# ... now you can use genai!
+genai ...
+```
 
 ## Prerequisites
 

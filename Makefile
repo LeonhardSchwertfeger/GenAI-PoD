@@ -43,6 +43,12 @@ test:
 .PHONY: tests
 tests: test
 
+## retest Run only the tests that failed last time
+##
+.PHONY: retest
+retest:
+	$(PYTHON) -m pytest $(PYTEST_OPTS) --lf $(TESTS)
+
 ## wip			Run tests marked as wip
 ##
 .PHONY: wip

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (C) 2024
 # Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
@@ -23,8 +24,9 @@ from __future__ import annotations
 import logging
 import re
 from time import sleep
+from typing import Any
 
-import undetected_chromedriver as uc  # type: ignore[import]
+import undetected_chromedriver as uc
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
     ElementNotInteractableException,
@@ -37,6 +39,8 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
 from genai_pod.utils import UploadConfig, iterate_and_upload, start_chrome
+
+logger = logging.getLogger(__name__)
 
 
 def upload_spreadshirt(upload_path: str) -> None:
@@ -85,7 +89,7 @@ def _wait_and_click(
             ec.element_to_be_clickable((by, selector)),
         ).click()
     except Exception:
-        logging.info("Failed to click on element with selector: %s", selector)
+        logger.exception("Failed to click on element with selector: %s", selector)
 
 
 def _check_not_available_names(
@@ -141,19 +145,22 @@ def _check_not_available_names(
             input_field = driver.find_element(By.ID, input_field_id)
             driver.execute_script("arguments[0].value = '';", input_field)
             driver.execute_script(
-                "arguments[0].value = arguments[1];", input_field, text
+                "arguments[0].value = arguments[1];",
+                input_field,
+                text,
             )
 
             # Trigger necessary events
             for event in ["input", "change", "blur", "keyup"]:
                 driver.execute_script(
-                    f"arguments[0].dispatchEvent(new Event('{event}'));", input_field
+                    f"arguments[0].dispatchEvent(new Event('{event}'));",
+                    input_field,
                 )
 
             # Wait for error message to disappear
             WebDriverWait(driver, 15).until(
                 ec.invisibility_of_element_located(
-                    (By.CSS_SELECTOR, error_info_selector)
+                    (By.CSS_SELECTOR, error_info_selector),
                 ),
             )
 
@@ -174,19 +181,20 @@ def _check_not_available_names(
             # Wait for error message to disappear
             WebDriverWait(driver, 15).until(
                 ec.invisibility_of_element_located(
-                    (By.CSS_SELECTOR, error_info_selector)
+                    (By.CSS_SELECTOR, error_info_selector),
                 ),
             )
 
             return True, final_tags_string  # Correction made
 
     except NoSuchElementException:
-        logging.info("%s", str(field_type.capitalize()) + "is already valid.")
+        logger.debug("%s", str(field_type.capitalize()) + "is already valid.")
         return False, text  # No error element found
 
     except TimeoutException:
-        logging.info(
-            "Error message did not disappear after correction for %s", str(field_type)
+        logger.error(
+            "Error message did not disappear after correction for %s",
+            str(field_type),
         )
         return False, text  # Correction failed
 
@@ -202,7 +210,8 @@ def _setup_tags(driver: uc.Chrome, tags: str | list[str]) -> None:
     :type tags: Union[str, list[str]]
     """
     input_element = driver.find_element(
-        By.CSS_SELECTOR, "div.dropdown-button input.dropdown-input"
+        By.CSS_SELECTOR,
+        "div.dropdown-button input.dropdown-input",
     )
 
     # Clear existing tags
@@ -218,7 +227,7 @@ def _setup_tags(driver: uc.Chrome, tags: str | list[str]) -> None:
             input_element.send_keys(tag)
             input_element.send_keys(Keys.ENTER)
 
-    logging.info("***TAG SETUP DONE***")
+    logger.info("***TAG SETUP DONE***")
 
 
 def wait_until_value_exceeds_50(driver: uc.Chrome) -> None:
@@ -261,26 +270,26 @@ def _select_marketplace(driver: uc.Chrome) -> None:
     # Click on Spreadshirt
     try:
         select_marketplaces[0].click()
-        logging.info("Spreadshirt has been successfully selected.")
+        logger.info("Spreadshirt has been successfully selected.")
     except (ElementClickInterceptedException, ElementNotInteractableException) as e:
-        logging.info(
+        logger.exception(
             "Failed to select Spreadshirt. "
-            "Please ensure the Spreadshirt option is available.",
+            "Please ensure the Spreadshirt option is available. %e",
+            e,
         )
-        raise e
 
     # Attempt to click on Spreadshop
     if len(select_marketplaces) > 1:
         try:
             select_marketplaces[1].click()
-            logging.info("Spreadshop has been successfully selected.")
+            logger.debug("Spreadshop has been successfully selected.")
         except (ElementClickInterceptedException, ElementNotInteractableException):
-            logging.info(
+            logger.warning(
                 "Spreadshop could not be selected. "
                 "This is optional. Please set up a Spreadshop if you wish to use this feature.",
             )
     else:
-        logging.info(
+        logger.warning(
             "Spreadshop option is not available. "
             "This is optional. Please set up a Spreadshop if you wish to use this feature.",
         )
@@ -300,12 +309,12 @@ def _upload_image(driver: uc.Chrome, image_path: str) -> bool:
 
     _wait_and_click(driver, ".card-container.col-xs-1.upload-tile", timeout=60)
     driver.find_element(By.ID, "hiddenFileInput").send_keys(image_path)
-    wait = WebDriverWait(driver, timeout=60)
+    wait = WebDriverWait(driver, timeout=100)
 
     try:
         wait.until(
             ec.visibility_of_element_located(
-                (By.CSS_SELECTOR, ".preview-image-loader")
+                (By.CSS_SELECTOR, ".preview-image-loader"),
             ),
         )
     except TimeoutException:
@@ -323,12 +332,12 @@ def _upload_image(driver: uc.Chrome, image_path: str) -> bool:
                     "Du hast das tägliche Limit für Uploads erreicht."
                     in limit_message_element.text
                 ):
-                    logging.exception("Upload limit reached.")
+                    logger.error("Upload limit reached.")
                     sys.exit(1)
-                logging.exception("Upload failed, error element found.")
+                logger.error("Upload failed, error element found.")
                 return False
         except NoSuchElementException:
-            logging.info("No upload error detected, proceeding.")
+            logger.debug("No upload error detected, proceeding.")
 
     wait.until(
         ec.invisibility_of_element_located((By.CSS_SELECTOR, ".preview-image-loader")),
@@ -400,11 +409,11 @@ def _select_marketplace_and_save(driver: uc.Chrome) -> None:
             timeout=60,
         )
     except NoSuchElementException:
-        logging.info(
+        logger.error(
             "No Element found while determining if original or marketplace selection is required.",
         )
     except Exception:
-        logging.info(
+        logger.error(
             "Problem while determining if original or marketplace selection is required.",
         )
 
@@ -463,7 +472,7 @@ def _input_details(
     title: str,
     description: str,
     tag: str,
-) -> tuple[list, str]:
+) -> tuple[Any, str]:
     """Inputs the title, description, and tags.
 
     :param driver: The WebDriver instance.
@@ -526,10 +535,14 @@ def _correct_fields(
     while True:
         title_corrected, title = _check_not_available_names(driver, title, "title")
         description_corrected, description = _check_not_available_names(
-            driver, description, "description"
+            driver,
+            description,
+            "description",
         )
         tags_corrected, tags_string = _check_not_available_names(
-            driver, tags_string, "tags"
+            driver,
+            tags_string,
+            "tags",
         )
         if not (title_corrected or description_corrected or tags_corrected):
             break
@@ -538,7 +551,7 @@ def _correct_fields(
 
 def _select_language_and_publish(
     driver: uc.Chrome,
-    more_languages_button: list,
+    more_languages_button: Any,
 ) -> None:
     """Selects the language and publishes the design.
 

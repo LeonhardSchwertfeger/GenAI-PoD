@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (C) 2024
 # Benjamin Thomas Schwertfeger https://github.com/btschwertfeger
@@ -25,8 +26,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import undetected_chromedriver as uc  # type: ignore[import]
+import undetected_chromedriver as uc
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -46,10 +49,10 @@ class UploadConfig:
     """
 
     upload_path: str
-    upload_function: Callable[..., Any]
+    upload_function: Callable[..., bool]
     used_folder_name: str
     error_folder_name: str
-    exclude_folders: list[str]
+    exclude_folders: list[str] | None
 
 
 def start_chrome(chrome_profile: str, output_directory: Path | None) -> uc.Chrome:
@@ -92,10 +95,10 @@ def start_chrome(chrome_profile: str, output_directory: Path | None) -> uc.Chrom
 
         return driver
     except Exception as e:
-        logging.exception("Error starting Chrome: %s", e)
+        logger.exception("Error starting Chrome: %s", e)
         if "driver" in locals() and driver:
             driver.quit()
-        raise AbortScriptError("Error starting Chrome", driver) from e
+        raise AbortScriptError("Error starting Chrome") from e
 
 
 def _create_profile_directory(user_data_dir: Path, profile_name: str) -> None:
@@ -111,7 +114,9 @@ def _create_profile_directory(user_data_dir: Path, profile_name: str) -> None:
 
 
 def _prepare_profile_directory(
-    user_data_dir: Path, chrome_profile: str, output_directory: Path | None
+    user_data_dir: Path,
+    chrome_profile: str,
+    output_directory: Path | None,
 ) -> tuple[Path, str]:
     """Prepares the directory structure for the specified Chrome profile.
 
@@ -154,7 +159,9 @@ def _clear_session_files(profile_dir: Path) -> None:
 
 
 def _build_chrome_options(
-    user_data_dir: Path, profile_name: str, output_directory: Path | None
+    user_data_dir: Path,
+    profile_name: str,
+    output_directory: Path | None,
 ) -> uc.ChromeOptions:
     """Constructs and configures ChromeOptions for undetected_chromedriver.
 
@@ -210,9 +217,9 @@ def _launch_chrome(chrome_options: uc.ChromeOptions) -> uc.Chrome:
     if platform.machine() == "aarch64":
         path = "Paste here your undetected_chromedriver/chromedriver_copy path"
         if not os.path.exists(path):
-            logging.error(
+            logger.error(
                 "You have an aarch64 Architecture. "
-                "Please follow the steps in aarch64_README.md!"
+                "Please follow the steps in aarch64_README.md!",
             )
             sys.exit(0)
         return uc.Chrome(options=chrome_options, driver_executable_path=path)
@@ -285,7 +292,7 @@ def write_metadata(
     :param directory: The directory where metadata files will be saved.
     :type directory: Path
     """
-    logging.info("Writing metadata to %s", directory)
+    logger.info("Writing metadata to %s", directory)
     directory.mkdir(parents=True, exist_ok=True)
 
     # Write title
@@ -326,7 +333,7 @@ def iterate_and_upload(
     :param config: Configuration settings for the upload process.
     :type config: UploadConfig
     """
-    logging.info("Starting iterate_and_upload in path: %s", config.upload_path)
+    logger.info("Starting iterate_and_upload in path: %s", config.upload_path)
     if config.exclude_folders is None:
         config.exclude_folders = [config.used_folder_name, config.error_folder_name]
     base_path = Path(config.upload_path)
@@ -340,16 +347,14 @@ def iterate_and_upload(
         if subdir.is_dir() and subdir.name not in config.exclude_folders
     ]
 
-    logging.info("Found %d subdirectories to process.", len(subdirs))
+    logger.debug("Found %d subdirectories to process.", len(subdirs))
 
     if not subdirs:
-        logging.warning(
-            "No subdirectories found to process. Exiting iterate_and_upload."
-        )
+        logger.warning("No subdirectories found to process. Exiting iterating process.")
         return
 
     for subdir in subdirs:
-        logging.info("Processing subdirectory: %s", subdir)
+        logger.info("Processing subdirectory: %s", subdir)
         result = process_subdir(
             subdir=subdir,
             base_path=base_path,
@@ -357,9 +362,9 @@ def iterate_and_upload(
             config=config,
         )
         if not result:
-            logging.error("An error occurred during processing folder %s.", subdir)
+            logger.error("An error occurred during processing folder %s.", subdir)
 
-    logging.info("Finished iterate_and_upload.")
+    logger.info("Finished iterate_and_upload.")
 
 
 def process_subdir(
@@ -384,7 +389,7 @@ def process_subdir(
     """
     from shutil import move
 
-    logging.info("Starting to process subdir: %s", subdir)
+    logger.info("Starting to process subdir: %s", subdir)
     try:
         image_file = find_image_file(subdir)
 
@@ -394,7 +399,7 @@ def process_subdir(
         title_text = read_file_contents(subdir / "title.txt")
 
         # Attempt to upload using the provided upload function
-        logging.info("Calling upload function.")
+        logger.debug("Calling upload function.")
         success = config.upload_function(
             driver=driver,
             description=description_text,
@@ -406,18 +411,20 @@ def process_subdir(
         target_folder = config.used_folder_name if success else config.error_folder_name
         move(str(subdir), base_path / target_folder)
         if success:
-            logging.info(
-                "Successfully uploaded %s. Moving to %s.", subdir, target_folder
+            logger.debug(
+                "Successfully uploaded %s. Moving to %s.",
+                subdir,
+                target_folder,
             )
         else:
-            logging.error("Upload failed for folder %s.", subdir)
+            logger.error("Upload failed for folder %s.", subdir)
         return success
 
     except FileNotFoundError as e:
-        logging.exception(str(e))
+        logger.exception(str(e))
         move(str(subdir), base_path / config.error_folder_name)
     except Exception as e:
-        logging.exception("Error processing folder %s: %s", subdir, e)
+        logger.exception("Error processing folder %s: %s", subdir, e)
         move(str(subdir), base_path / config.error_folder_name)
 
     return False
@@ -435,7 +442,7 @@ def find_image_file(subdir: Path) -> Path:
     for ext in ["*.png", "*.jpg", "*.jpeg"]:
         files = list(subdir.glob(ext))
         if files:
-            logging.debug("Found image file: %s", files[0])
+            logger.debug("Found image file: %s", files[0])
             return files[0]
     raise FileNotFoundError(f"No image file found in {subdir}")
 
@@ -450,7 +457,7 @@ def read_file_contents(file_path: Path) -> str:
     """
     with file_path.open("r", encoding="utf-8") as f:
         content = f.read().strip()
-        logging.debug("Read from %s: %s", file_path.name, content)
+        logger.debug("Read from %s: %s", file_path.name, content)
         return content
 
 
@@ -512,16 +519,16 @@ def load_cookies(driver: uc.Chrome, path: Path) -> None:
             if cookie["domain"] in current_url:
                 driver.add_cookie(cookie)
             else:
-                logging.debug(
+                logger.debug(
                     "Skipping cookie for domain '%s' (current URL: %s)",
                     cookie["domain"],
                     current_url,
                 )
 
         except (NoSuchElementException, TimeoutException) as e:
-            logging.exception("Error adding cookie: %s", e)
+            logger.exception("Error adding cookie: %s", e)
         except Exception as e:
-            logging.exception("Unexpected error adding cookie: %s", e)
+            logger.exception("Unexpected error adding cookie: %s", e)
 
 
 def pilling_image(image_path: str) -> None:
@@ -535,13 +542,17 @@ def pilling_image(image_path: str) -> None:
     1. Opens the image and converts it to RGBA mode for transparency handling.
     2. Converts the image into a NumPy array for efficient processing.
     3. Creates masks based on the alpha (transparency) values of the pixels.
-       - Pixels with alpha greater than 153 (more than 60% opacity) are adjusted.
-       - Pixels with alpha 153 or less (60% or less opacity) are made fully transparent.
-    4. Adjusts the RGB values of the pixels with high opacity, blending them with white background.
+       - Pixels with alpha greater than 153 (more than 60% opacity) are
+         adjusted.
+       - Pixels with alpha 153 or less (60% or less opacity) are made fully
+         transparent.
+    4. Adjusts the RGB values of the pixels with high opacity, blending them
+       with white background.
     5. Sets the alpha channel of adjusted pixels to full opacity (255).
-    6. Saves the modified image as a new PNG file with "_customised" added to the original filename.
+    6. Saves the modified image as a new PNG file with "_customized" added to
+       the original filename.
     """
-    import numpy as np  # type: ignore[import]
+    import numpy as np
 
     image = Image.open(image_path).convert("RGBA")
     image_array = np.array(image).astype(np.float32)
