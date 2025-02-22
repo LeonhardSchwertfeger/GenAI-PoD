@@ -90,7 +90,7 @@ def _error_capsolver(driver: uc.Chrome) -> None:
         logger.debug("Captcha solve error not found.")
 
 
-def run_bg_remove(image_path: str) -> Path:
+def run_bg_remove(image_path: str, undetected_chromedriver_path: str | None) -> Path:
     """Remove the background of an image using remove.bg.
 
     Automates the process using Selenium and handles captcha solving.
@@ -98,13 +98,15 @@ def run_bg_remove(image_path: str) -> Path:
     :param image_path: The path to the image file.
     :type image_path: str
     :return: The path to the processed image file.
+    :param undetected_chromedriver_path: Path tp the undetected chromedriver
+    :type undetected_chromedriver_path: str | None
     :rtype: Path
     :raises AbortScriptError: If an error occurs during the process.
     """
     input_dir = Path(image_path).parent
     driver = None
     try:
-        driver = start_chrome("capsolver", input_dir)
+        driver = start_chrome("capsolver", input_dir, undetected_chromedriver_path)
 
         # Handling modal dialog
         try:
@@ -181,7 +183,7 @@ def run_bg_remove(image_path: str) -> Path:
     return max(list_of_files, key=os.path.getctime)
 
 
-def bg_remove(image_path: str, retries: int = 2) -> Path | None:
+def bg_remove(image_path: str, undetected_chromedriver_path: str | None) -> Path | None:
     """Remove the background of an image with retries upon failure.
 
     :param image_path: The path to the image file.
@@ -189,11 +191,15 @@ def bg_remove(image_path: str, retries: int = 2) -> Path | None:
     :param retries: Number of retries allowed. Defaults to 2.
     :type retries: int, optional
     :return: The path to the processed image file, or None if unsuccessful.
+    :param undetected_chromedriver_path: Path tp the undetected chromedriver
+    :type undetected_chromedriver_path: str | None
     :rtype: Path | None
     """
+    retries: int = 2
+
     for attempt in range(retries):
         try:
-            return run_bg_remove(image_path)
+            return run_bg_remove(image_path, undetected_chromedriver_path)
         except AbortScriptError as err:
             logger.warning("Attempt %d/%d failed: %s", attempt + 1, retries, err)
             err.close_driver()

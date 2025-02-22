@@ -55,7 +55,11 @@ class UploadConfig:
     exclude_folders: list[str] | None
 
 
-def start_chrome(chrome_profile: str, output_directory: Path | None) -> uc.Chrome:
+def start_chrome(
+    chrome_profile: str,
+    output_directory: Path | None,
+    undetected_chromedriver_path: str | None,
+) -> uc.Chrome:
     """Launches a Chrome browser instance using the specified parameters.
 
     The `chrome_profile` parameter is always required. If `output_directory` is provided,
@@ -66,6 +70,8 @@ def start_chrome(chrome_profile: str, output_directory: Path | None) -> uc.Chrom
     :param output_directory: The directory where downloads will be saved,
     or None if no such directory is specified.
     :type output_directory: Path | None
+    :param undetected_chromedriver_path: Path tp the undetected chromedriver
+    :type undetected_chromedriver_path: str | None
     :return: An instance of the undetected_chromedriver Chrome WebDriver.
     :rtype: uc.Chrome
     """
@@ -86,7 +92,7 @@ def start_chrome(chrome_profile: str, output_directory: Path | None) -> uc.Chrom
             used_profile_name,
             output_directory,
         )
-        driver = _launch_chrome(chrome_options)
+        driver = _launch_chrome(chrome_options, undetected_chromedriver_path)
 
         if output_directory:
             _configure_download_behavior(driver, output_directory)
@@ -200,13 +206,18 @@ def _build_chrome_options(
     return chrome_options
 
 
-def _launch_chrome(chrome_options: uc.ChromeOptions) -> uc.Chrome:
+def _launch_chrome(
+    chrome_options: uc.ChromeOptions,
+    undetected_chromedriver_path: str | None,
+) -> uc.Chrome:
     """Launches the Chrome browser using undetected_chromedriver with the specified options.
 
     If running on an aarch64 architecture, a special path must be provided.
 
     :param chrome_options: The ChromeOptions instance to configure the driver.
     :type chrome_options: uc.ChromeOptions
+    :param undetected_chromedriver_path: Path tp the undetected chromedriver
+    :type undetected_chromedriver_path: str | None
     :return: A running instance of the Chrome WebDriver.
     :rtype: uc.Chrome
     """
@@ -215,14 +226,16 @@ def _launch_chrome(chrome_options: uc.ChromeOptions) -> uc.Chrome:
     import sys
 
     if platform.machine() == "aarch64":
-        path = "Paste here your undetected_chromedriver/chromedriver_copy path"
-        if not os.path.exists(path):
+        if not os.path.exists(str(undetected_chromedriver_path)):
             logger.error(
                 "You have an aarch64 Architecture. "
                 "Please follow the steps in aarch64_README.md!",
             )
             sys.exit(0)
-        return uc.Chrome(options=chrome_options, driver_executable_path=path)
+        return uc.Chrome(
+            options=chrome_options,
+            driver_executable_path=undetected_chromedriver_path,
+        )
     return uc.Chrome(options=chrome_options)
 
 

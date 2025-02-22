@@ -55,13 +55,17 @@ logger = logging.getLogger(__name__)
 # https://github.com/Priyanshu-hawk/ChatGPT-unofficial-api-selenium/
 # tree/5a258b9db844ae13da633591568790460d82524b
 # MIT License (c) 2022 Nat Friedman
-def _start_chat_gpt() -> uc.Chrome:
+def _start_chat_gpt(
+    undetected_chromedriver_path: str | None,
+) -> uc.Chrome:
     """Start a ChatGPT session by logging in.
+    :param undetected_chromedriver_path: Path tp the undetected chromedriver
+    :type undetected_chromedriver_path: str | None
 
     :return: The uc.Chrome instance.
     :rtype: uc.Chrome
     """
-    driver = start_chrome("ChatGPT", None)
+    driver = start_chrome("ChatGPT", None, undetected_chromedriver_path)
     active_drivers.append(driver)
 
     driver.get(
@@ -291,11 +295,12 @@ def _gpt_type_text(driver: uc.Chrome, text: str) -> None:
     textarea.send_keys(text)
 
 
-def _process_image(
+def _process_image(  # pylint: disable=R0914
     image_url: str,
     image_dir: str,
     title: str,
     tor_binary_path: str | None,
+    undetected_chromedriver_path: str | None,
 ) -> Path:
     """Process and save an image from a given URL, remove its background, and then upscale it.
 
@@ -307,6 +312,8 @@ def _process_image(
     :type title: str
     :return: The output directory where images are saved.
     :rtype: pathlib.Path
+    :param undetected_chromedriver_path: Path tp the undetected chromedriver
+    :type undetected_chromedriver_path: str | None
     :raises AbortScriptError: If background removal fails.
     """
     import os
@@ -327,7 +334,9 @@ def _process_image(
             image.save(raw_image_path)
 
             logger.info("Removing Background...")
-            bg_removed_image_path = bg_remove(str(raw_image_path))
+            bg_removed_image_path = bg_remove(
+                str(raw_image_path), undetected_chromedriver_path
+            )
 
             logger.info("Upscaling for 2k image...")
             upscaled_image_path = upscale(
@@ -346,8 +355,6 @@ def _process_image(
             if upscaled_image_path2:
                 logger.info("Pilling image...")
                 pilling_image(str(upscaled_image_path2))
-        except:  # pylint: disable=try-except-raise # noqa: disable=bare-except
-            raise
         finally:
             for file_ in (bg_removed_image_path, upscaled_image_path, raw_image_path):
                 os.remove(str(file_))
@@ -621,6 +628,7 @@ def _start_generating(
     image_dir: str,
     image_file_path: str,
     tor_binary_path: str | None,
+    undetected_chromedriver_path: str | None,
 ) -> None:
     """Start generating an image using GPT and save it to a specified directory.
 
@@ -630,6 +638,8 @@ def _start_generating(
     :type image_dir: str
     :param image_file_path: The path to the image file to upload.
     :type image_file_path: str
+    :param undetected_chromedriver_path: Path tp the undetected chromedriver
+    :type undetected_chromedriver_path: str | None
     :raises AbortScriptError: If any step in the generation process fails.
     """
     import time
@@ -719,7 +729,9 @@ def _start_generating(
     _handle_errors(driver)
 
     driver.quit()
-    result = _process_image(image_url, image_dir, title, tor_binary_path)
+    result = _process_image(
+        image_url, image_dir, title, tor_binary_path, undetected_chromedriver_path
+    )
     write_metadata(
         title=title,
         tags=tags,
@@ -736,6 +748,7 @@ def _start_generating(
 def generate_image_selenium_gpt(
     output_directory: str,
     tor_binary_path: str | None,
+    undetected_chromedriver_path: str | None,
 ) -> None:
     """Main function to start the GPT generating process."""
     import time
@@ -746,7 +759,7 @@ def generate_image_selenium_gpt(
     while retries < max_retries:
         try:
             logger.info("Starting Chrome and scraping image from Vexels.")
-            driver = start_chrome("Default", None)
+            driver = start_chrome("Default", None, undetected_chromedriver_path)
             active_drivers.append(driver)
             image_file_path = _scrape_vexels_image(driver)
             if image_file_path is None:
@@ -756,13 +769,14 @@ def generate_image_selenium_gpt(
                 active_drivers.remove(driver)
 
             logger.info("Starting ChatGPT session and generating image.")
-            chatgpt_driver = _start_chat_gpt()
+            chatgpt_driver = _start_chat_gpt(undetected_chromedriver_path)
             active_drivers.append(chatgpt_driver)
             _start_generating(
                 chatgpt_driver,
                 output_directory,
                 image_file_path,
                 tor_binary_path,
+                undetected_chromedriver_path,
             )
             active_drivers.remove(chatgpt_driver)
 

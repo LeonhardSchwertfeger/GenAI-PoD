@@ -91,15 +91,34 @@ def generate(ctx: Context, output_directory: str) -> None:
     help="Path to the Tor binary.",
     required=False,
 )
+@option(
+    "--undetected-chromedriver-path",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+    ),
+    help="Path to the undetected chromedriver.",
+    required=False,
+)
 @pass_context
-def generategpt(ctx: Context, tor_binary_path: str | click.Path) -> None:
+def generategpt(
+    ctx: Context,
+    tor_binary_path: str | click.Path,
+    undetected_chromedriver_path: str | click.Path,
+) -> None:
     """Use GPT to generate images via Selenium."""
     from genai_pod.generators.generate_gpt import (
         AbortScriptError,
         generate_image_selenium_gpt,
     )
 
-    ctx.obj |= {"tor_binary_path": tor_binary_path}
+    ctx.obj |= {
+        "tor_binary_path": tor_binary_path,
+        "undetected_chromedriver_path": undetected_chromedriver_path,
+    }
     while True:
         try:
             generate_image_selenium_gpt(**ctx.obj)
@@ -121,12 +140,25 @@ def upload(ctx: Context, **kwargs: Any) -> None:
 
 
 @upload.command()
+@option(
+    "--undetected-chromedriver-path",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+    ),
+    help="Path to the undetected chromedriver.",
+    required=False,
+)
 @pass_context
-def spreadshirt(ctx: Context, **kwargs: Any) -> None:
+def spreadshirt(ctx: Context, undetected_chromedriver_path: str | click.Path) -> None:
     """Upload an image to Spreadshirt."""
     from genai_pod.uploaders.spreadshirt import upload_spreadshirt
 
-    ctx.obj |= kwargs
+    ctx.obj |= {"undetected_chromedriver_path": undetected_chromedriver_path}
+
     upload_spreadshirt(**ctx.obj)
 
 

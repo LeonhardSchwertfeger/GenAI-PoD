@@ -33,7 +33,7 @@ def verify(profile_name: str, site: str) -> None:
     :param site: The URL of the website to load.
     :type site: str
     """
-    driver = start_chrome(profile_name, None)
+    driver = start_chrome(profile_name, None, None)
     driver.refresh()
     driver.get(site)
 

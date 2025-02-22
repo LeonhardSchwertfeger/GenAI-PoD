@@ -43,13 +43,17 @@ from genai_pod.utils import UploadConfig, iterate_and_upload, start_chrome
 logger = logging.getLogger(__name__)
 
 
-def upload_spreadshirt(upload_path: str) -> None:
+def upload_spreadshirt(
+    upload_path: str, undetected_chromedriver_path: str | None
+) -> None:
     """Initialize the driver and start uploading designs to Spreadshirt.
 
     :param upload_path: The path to upload designs from.
     :type upload_path: str
+    :param undetected_chromedriver_path: Path tp the undetected chromedriver
+    :type undetected_chromedriver_path: str | None
     """
-    driver = start_chrome("Spreadshirt", None)
+    driver = start_chrome("Spreadshirt", None, undetected_chromedriver_path)
     driver.get("https://partner.spreadshirt.de/designs")
 
     config = UploadConfig(
