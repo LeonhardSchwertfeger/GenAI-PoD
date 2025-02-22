@@ -147,28 +147,54 @@ def run_bg_remove(image_path: str) -> Path:
             _error_capsolver(driver)
             raise AbortScriptError("input[type='file'] failed") from e
 
-        # Trying to click the download button (up to two times)
+        # 1. Download-Button
         for attempt in range(2):
             try:
                 download_button = WebDriverWait(driver, 100).until(
-                    ec.element_to_be_clickable(
-                        (By.XPATH, "//button[.//div[text()='Download']]"),
-                    ),
+                    ec.element_to_be_clickable((By.ID, "headlessui-popover-button-13"))
                 )
                 sleep(2)
                 download_button.click()
                 sleep(10)
                 break
-            except (NoSuchElementException, ElementNotVisibleException) as err:
+            except (
+                NoSuchElementException,
+                ElementNotVisibleException,
+                TimeoutException,
+            ) as err:
                 logger.debug(
-                    "Attempt %s failed to click the download button.",
-                    attempt + 1,
+                    "Attempt %s failed to click the download button.", attempt + 1
                 )
                 if attempt == 1:
                     raise AbortScriptError(
-                        "Trying to click the download button failed",
-                        driver,
+                        "Trying to click the download button failed", driver
                     ) from err
+
+        # 2. Button "Vorschau"
+        for attempt in range(2):
+            try:
+                preview_button = WebDriverWait(driver, 100).until(
+                    ec.element_to_be_clickable(
+                        (By.XPATH, "//button[.//p[contains(text(),'Vorschau')]]")
+                    )
+                )
+                sleep(2)
+                preview_button.click()
+                sleep(10)
+                break
+            except (
+                NoSuchElementException,
+                ElementNotVisibleException,
+                TimeoutException,
+            ) as err:
+                logger.debug(
+                    "Attempt %s failed to click the Vorschau button.", attempt + 1
+                )
+                if attempt == 1:
+                    raise AbortScriptError(
+                        "Trying to click the Vorschau button failed", driver
+                    ) from err
+
     except Exception as err:
         logger.exception("An error occurred in run_bg_remove: %s", err)
         raise AbortScriptError("Error in run_bg_remove", driver) from err

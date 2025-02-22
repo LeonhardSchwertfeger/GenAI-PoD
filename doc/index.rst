@@ -4,7 +4,7 @@
 .. Leonhard Thomas Schwertfeger https://github.com/LeonhardSchwertfeger
 
 GenAI-PoD Documentation
-===================
+=======================
 
 Welcome to the GenAI-PoD documentation.
 

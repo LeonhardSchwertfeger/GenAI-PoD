@@ -1,14 +1,14 @@
 click
 cloup
 ipython
-nbsphinx
+nbsphinx==0.8.12
 numpy
 pillow
 pytz
 requests
 selenium
 seleniumbase
-sphinx
+sphinx==7.4.7
 sphinx-click
 sphinx-rtd-theme
 tqdm

@@ -13,7 +13,7 @@ Welcome to **GenAI-PoD** — your command-line tool that streamlines the process
    Always check each platform’s Terms of Service before using automated tools.
 
 Why GenAI-PoD?
-----------
+--------------
 
 1. **Automated Image Generation**
    Enjoy hands-free image creation powered by ChatGPT in a real browser session (using Selenium). Generate art, patterns, or any conceptual designs with minimal effort.
