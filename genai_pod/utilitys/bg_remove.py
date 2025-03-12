@@ -204,6 +204,7 @@ def run_bg_remove(image_path: str) -> Path:
 
     # After driver is closed, proceed
     list_of_files = list(Path(input_dir).glob("*"))
+    print(str(max(list_of_files, key=os.path.getctime)))
     return max(list_of_files, key=os.path.getctime)
 
 

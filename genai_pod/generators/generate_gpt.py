@@ -316,6 +316,8 @@ def _process_image(
     image_response = get(image_url, timeout=60)
     image_response.raise_for_status()
     with Image.open(BytesIO(image_response.content)) as image:
+        bg_removed_image_path = None
+        upscaled_image_path = None
         try:
             sanitized_title = sub(r"\W", "_", title)[:10]
             title_hash = sha256(title.encode()).hexdigest()[:8]
