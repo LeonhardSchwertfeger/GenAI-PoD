@@ -27,7 +27,6 @@ from pathlib import Path
 from typing import Any
 
 import undetected_chromedriver as uc
-from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +68,7 @@ def start_chrome(chrome_profile: str, output_directory: Path | None) -> uc.Chrom
     :return: An instance of the undetected_chromedriver Chrome WebDriver.
     :rtype: uc.Chrome
     """
-    from genai_pod.utilitys.bg_remove import (  # pylint: disable=cyclic-import
+    from genai_pod.generators.generate_gpt import (  # pylint: disable=cyclic-import
         AbortScriptError,
     )
 
@@ -531,12 +530,14 @@ def load_cookies(driver: uc.Chrome, path: Path) -> None:
             logger.exception("Unexpected error adding cookie: %s", e)
 
 
-def pilling_image(image_path: str) -> None:
+def pilling_image(image_path: str, trim_cm: float = 0.2) -> None:
     """Processes an image by adjusting transparency and blending
     it with a white background more efficiently.
 
     :param image_path: The path to the PNG image file to be processed.
     :type image_path: str
+    :param trim_cm: The amount of trimming in centimeters. Default is 0.2 cm.
+    :type trim_cm: float
 
     This function performs the following steps:
     1. Opens the image and converts it to RGBA mode for transparency handling.
@@ -553,35 +554,28 @@ def pilling_image(image_path: str) -> None:
        the original filename.
     """
     import numpy as np
+    from PIL import Image, ImageFilter
 
-    image = Image.open(image_path).convert("RGBA")
-    image_array = np.array(image).astype(np.float32)
+    dpi = 300
+    erosion_pixels = int(trim_cm * dpi / 2.54)
 
-    r, g, b, a = (
-        image_array[:, :, 0],
-        image_array[:, :, 1],
-        image_array[:, :, 2],
-        image_array[:, :, 3],
-    )
+    with Image.open(image_path).convert("RGBA") as img:
+        alpha = img.split()[3]
+        for _ in range(erosion_pixels):
+            alpha = alpha.filter(ImageFilter.MinFilter(3))
+        alpha = alpha.filter(ImageFilter.GaussianBlur(1))
+        img.putalpha(alpha)
 
-    mask_high_alpha = a > 153
-    mask_low_alpha = a <= 153
-    image_array[mask_low_alpha] = [0, 0, 0, 0]
+        arr = np.array(img).astype(np.float32)
+        rgb, a = arr[..., :3], arr[..., 3]
 
-    if np.any(mask_high_alpha):
-        delta = (255 - a[mask_high_alpha]) / 255.0
+        mask = np.clip((a - 64) / 128, 0, 1)[..., None]
+        blended = rgb * mask + 255 * (1 - mask)
 
-        image_array[:, :, 0][mask_high_alpha] = (
-            r[mask_high_alpha] + (255 - r[mask_high_alpha]) * delta
+        final = np.dstack((blended, np.where(a > 64, 255, 0).astype(np.uint8))).astype(
+            np.uint8
         )
-        image_array[:, :, 1][mask_high_alpha] = (
-            g[mask_high_alpha] + (255 - g[mask_high_alpha]) * delta
-        )
-        image_array[:, :, 2][mask_high_alpha] = (
-            b[mask_high_alpha] + (255 - b[mask_high_alpha]) * delta
-        )
-        image_array[:, :, 3][mask_high_alpha] = 255
 
-    new_image = Image.fromarray(image_array.astype("uint8"), "RGBA")
-    new_image_path = image_path.replace(".png", "_pil.png")
-    new_image.save(new_image_path)
+        Image.fromarray(final, "RGBA").filter(ImageFilter.SMOOTH).filter(
+            ImageFilter.SHARPEN
+        ).save(image_path.replace(".png", "_pil.png"), dpi=(dpi, dpi))

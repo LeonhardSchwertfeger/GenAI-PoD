@@ -35,12 +35,10 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
 
-from genai_pod.utilitys.bg_remove import bg_remove
 from genai_pod.utilitys.bigjpg_upscaler import upscale
 from genai_pod.utils import clean_string, pilling_image, start_chrome, write_metadata
 
@@ -65,7 +63,7 @@ def _start_chat_gpt() -> uc.Chrome:
     active_drivers.append(driver)
 
     driver.get(
-        "https://chatgpt.com/g/g-SdXPspagG-merch-on-demand-print-on-demand-shirt-designer",
+        "https://chatgpt.com/",
     )
     logger.debug("Waiting for login page to load.")
 
@@ -125,26 +123,30 @@ def _get_image_src(driver: uc.Chrome) -> str:
     :rtype: str
     :raises AbortScriptError: If no valid image source is found.
     """
-    try:
-        image_divs: list[WebElement] = WebDriverWait(driver, 50).until(
-            lambda d: d.find_elements(
-                By.CSS_SELECTOR,
-                "div[class*='group/dalle-image aspect']",
-            ),
+    from selenium.webdriver.remote.webelement import WebElement
+
+    WebDriverWait(driver, 60).until(
+        ec.presence_of_element_located(
+            (By.XPATH, "//button[contains(., 'Bilderstellung wird gestartet')]")
         )
+    )
 
-        if not image_divs:
-            raise AbortScriptError("No image elements found at all.")
+    WebDriverWait(driver, 250).until(
+        ec.invisibility_of_element_located(
+            (By.XPATH, "//button[contains(., 'Bilderstellung wird gestartet')]")
+        )
+    )
+    sleep(120)
 
-        image_src = image_divs[-1].find_element(By.TAG_NAME, "img").get_attribute("src")
+    image_div: WebElement = WebDriverWait(driver, 150).until(
+        lambda d: d.find_element(By.CSS_SELECTOR, "div.absolute.left-0.right-0.top-0")
+    )
+    image_element = image_div.find_element(By.TAG_NAME, "img")
+    image_src = image_element.get_attribute("src")
+    if isinstance(image_src, str) and image_src.startswith("http"):
+        return image_src
 
-        if isinstance(image_src, str) and image_src.startswith("http"):
-            return image_src
-
-        raise AbortScriptError("No valid image source found.")
-    except (NoSuchElementException, TimeoutException) as err:
-        _handle_errors(driver)
-        raise AbortScriptError("Failed to find image source") from err
+    raise AbortScriptError("No valid image source found.")
 
 
 def _get_text_from_element(
@@ -174,7 +176,6 @@ def _get_text_from_element(
         try:
             _wait_for_element(driver, class_xpath, 60)
 
-            # Execute JavaScript to retrieve text from <p> elements within the markdown div
             script = f"""
                 var container = document.evaluate(
                     "{class_xpath}", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null
@@ -316,7 +317,6 @@ def _process_image(
     image_response = get(image_url, timeout=60)
     image_response.raise_for_status()
     with Image.open(BytesIO(image_response.content)) as image:
-        bg_removed_image_path = None
         upscaled_image_path = None
         try:
             sanitized_title = sub(r"\W", "_", title)[:10]
@@ -328,30 +328,22 @@ def _process_image(
             raw_image_path = output_directory / f"{title}-bg.png"
             image.save(raw_image_path)
 
-            logger.info("Removing Background...")
-            bg_removed_image_path = bg_remove(str(raw_image_path))
+            # No more background removal from external here, because ChatGPT does it
 
             logger.info("Upscaling for 2k image...")
             upscaled_image_path = upscale(
-                str(bg_removed_image_path),
+                str(raw_image_path),
                 Path(output_directory),
                 tor_binary_path,
             )
 
-            logger.info("Upscaling for 4k image...")
-            upscaled_image_path2 = upscale(
-                str(upscaled_image_path),
-                Path(output_directory),
-                tor_binary_path,
-            )
-
-            if upscaled_image_path2:
+            if upscaled_image_path:
                 logger.info("Pilling image...")
-                pilling_image(str(upscaled_image_path2))
+                pilling_image(str(upscaled_image_path))
         except:  # pylint: disable=try-except-raise # noqa: disable=bare-except
             raise
         finally:
-            for file_ in (bg_removed_image_path, upscaled_image_path, raw_image_path):
+            for file_ in (upscaled_image_path, raw_image_path):
                 os.remove(str(file_))
 
     return output_directory
@@ -666,9 +658,9 @@ def _start_generating(
         "Only the design/vector in view!"
         "1. Show the entire subject within the frame. (1024x1024), full in view"
         "2. Centered composition with all elements fully visible."
-        "3. No text."
         "4. Isolate the graphic on a background color and just start creating it. "
-        "5. funny Rubber Hose style or as a funny Modern Pop-Art illustration",
+        "5. Make it transparent."
+        "6. improve the original design",
     )
     _gpt_send_prompt(driver)
     image_url = _get_image_src(driver)
