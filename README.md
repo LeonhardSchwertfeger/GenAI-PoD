@@ -24,7 +24,7 @@ badge](https://img.shields.io/badge/python-3.11+-blue.svg)](https://shields.io/)
 > This software is provided “as is” without any warranty of reliability,
 > functionality, or fitness for a specific purpose. Any use, especially in
 > production environments, is at your own risk. Automated interactions may
-> violate the terms of service of OpenAI, Spreadshirt, Redbubble, remove.bg, or
+> violate the terms of service of OpenAI, Spreadshirt, Redbubble, or
 > bigjpg.com—always check them beforehand. This project is an unofficial tool,
 > not affiliated with or endorsed by these platforms. The authors assume no
 > liability for policy breaches, account suspensions, financial losses, legal
@@ -35,8 +35,7 @@ badge](https://img.shields.io/badge/python-3.11+-blue.svg)](https://shields.io/)
 
 **GenAI-PoD** is a versatile command-line tool that streamlines **image generation**
 and **webshop integration**. By leveraging **ChatGPT** (via Selenium
-automation), it can programmatically create images, apply **background
-removal**, perform **upscaling**, and finally **publish** these designs on
+automation), it can programmatically create images, perform **upscaling**, and finally **publish** these designs on
 popular print-on-demand (POD) platforms such as **Spreadshirt** and
 **Redbubble**.
 
@@ -45,8 +44,7 @@ popular print-on-demand (POD) platforms such as **Spreadshirt** and
 - **Direct ChatGPT Integration** Generate AI-driven designs or concept art using
   your **OpenAI** account via automated browser interactions.
 
-- **One-Stop Workflow** Automatically remove backgrounds
-  ([remove.bg](https://www.remove.bg/)) and upscale images
+- **One-Stop Workflow** Automatically uscale images
   ([bigjpg.com](https://bigjpg.com/)) without leaving the command-line.
 
 - **Seamless Uploads** Eliminate manual steps: GenAI-PoD can log you in, navigate to
@@ -63,9 +61,6 @@ popular print-on-demand (POD) platforms such as **Spreadshirt** and
 ---
 
 ## Features
-
-- **Background Removal** Automates background removal via Selenium on
-  [remove.bg](https://www.remove.bg/).
 
 - **Image Upscaling** Upscales images via Selenium on
   [bigjpg.com](https://bigjpg.com/).
@@ -290,8 +285,7 @@ genai verifysite ChatGPT
 ### Generate GPT Images
 
 The `generategpt` command typically takes around 11 minutes to complete. This
-duration includes the time required for AI-driven image creation, background
-removal, and upscaling processes.
+duration includes the time required for AI-driven image creation and upscaling processes.
 
 ### Upload to Spreadshirt
 
@@ -310,7 +304,6 @@ This project is licensed under the [GPL-3.0-or-later](./LICENSE).
 - [Tor Project](https://www.torproject.org) for anonymous connections.
 - [undetected-chromedriver](https://github.com/ultrafunkamsterdam/undetected-chromedriver)
   for web automation.
-- [remove.bg](https://www.remove.bg) for background removal services.
 - [bigjpg](https://bigjpg.com) for image upscaling services.
 
 ## Disclaimer
