@@ -281,6 +281,7 @@ def monitor_progress(driver: webdriver.Chrome) -> str | None:
         - "image_too_big" if the image is too large.
         - None if an unexpected issue occurs.
     :raises Exception: If the progress is stuck at 0% for over 1 minute.
+    :raises Exception: If the progress is stuck below 100% for over 6 minutes.
     """
     zero_start: float | None = None
     below_start: float | None = None
@@ -314,9 +315,9 @@ def monitor_progress(driver: webdriver.Chrome) -> str | None:
             if percent < 100:
                 if below_start is None:
                     below_start = time()
-                elif time() - below_start >= 240:
+                elif time() - below_start >= 360:
                     raise Exception(
-                        "Stuck for 4 minutes under 100%.",
+                        "Stuck for 6 minutes under 100%.",
                     )
             else:
                 below_start = None

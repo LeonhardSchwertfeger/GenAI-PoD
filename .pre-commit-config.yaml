@@ -29,19 +29,7 @@ repos:
           - --rcfile=pyproject.toml
           - -d=R0801,C0415,W0718,W0719 # ignore duplicate code and "Import outside toplevel"
           - -j=4
-        additional_dependencies:
-          - pytz
-          - requests
-          - undetected-chromedriver
-          - Pillow
-          - selenium
-          - tqdm
-          - numpy
-          - pyautogui
-          - webdriver-manager
-          - seleniumbase
-          - cloup
-          - types-click
+        language: system
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.4.2
     hooks:
