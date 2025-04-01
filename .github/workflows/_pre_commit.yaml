@@ -13,7 +13,7 @@ jobs:
   Pre-Commit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Python
@@ -21,8 +21,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: pip install .
+      - name: Install Dependencies
+        run: |
+          pip install .
+          pip install pylint
 
-      - name: Run pre-commit
+      - name: Run Pre-Commit
         uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
