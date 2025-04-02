@@ -530,7 +530,7 @@ def load_cookies(driver: uc.Chrome, path: Path) -> None:
             logger.exception("Unexpected error adding cookie: %s", e)
 
 
-def pilling_image(image_path: str, trim_cm: float = 0.2) -> None:
+def pilling_image(image_path: str, trim_cm: float = 0.1) -> None:
     """Processes an image by adjusting transparency and blending
     it with a white background more efficiently.
 

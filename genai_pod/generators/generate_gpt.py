@@ -17,7 +17,6 @@ import logging
 from datetime import datetime, timedelta
 from hashlib import sha256
 from io import BytesIO
-from json import load
 from pathlib import Path
 from re import sub
 from secrets import choice, randbelow
@@ -63,7 +62,7 @@ def _start_chat_gpt() -> uc.Chrome:
     active_drivers.append(driver)
 
     driver.get(
-        "https://chatgpt.com/",
+        "https://chatgpt.com/?model=gpt-4o",
     )
     logger.debug("Waiting for login page to load.")
 
@@ -521,22 +520,6 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
             ec.presence_of_all_elements_located((By.CLASS_NAME, "vx-grid-asset")),
         )
 
-        forbidden_words_path = (
-            Path(__file__).parent.absolute().parent
-            / "resources"
-            / "vexel_forbidden_words.json"
-        )
-        if not forbidden_words_path.exists():
-            logger.error("Forbidden words JSON file not found.")
-            return None
-
-        with forbidden_words_path.open("r", encoding="utf-8") as file:
-            forbidden_words = load(file)
-        forbidden_words_list = [
-            word.lower() for word in forbidden_words.get("forbidden_words", [])
-        ]
-        logger.debug("Loaded %s forbidden words.", len(forbidden_words_list))
-
         for attempt in range(10):
             asset = choice(driver.find_elements(By.CLASS_NAME, "vx-grid-asset"))
 
@@ -558,11 +541,6 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
 
                 if not img_title:
                     logger.warning("Image title is empty")
-                    continue
-
-                # Checking for forbidden words
-                if any(word in img_title.lower() for word in forbidden_words_list):
-                    logger.warning("Forbidden word found in title, retrying...")
                     continue
 
                 img_element = container.find_element(
