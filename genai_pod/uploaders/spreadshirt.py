@@ -295,54 +295,76 @@ def _select_marketplace(driver: uc.Chrome) -> None:
         )
 
 
-def _upload_image(driver: uc.Chrome, image_path: str) -> bool:
-    """Uploads the image to Spreadshirt.
-
+def _preview_image(driver: uc.Chrome, wait: Any) -> bool:
+    """
+    Checks if the preview image loader is visible and handles upload errors.
     :param driver: The WebDriver instance.
     :type driver: uc.Chrome
-    :param image_path: The file path of the image to upload.
-    :type image_path: str
-    :return: True if the image was uploaded successfully, False otherwise.
+    :param wait: The WebDriverWait instance.
+    :type wait: WebDriverWait
+    :return: True if the preview image loader is visible, False otherwise.
     :rtype: bool
     """
     import sys
 
-    _wait_and_click(driver, ".card-container.col-xs-1.upload-tile", timeout=60)
-    driver.find_element(By.ID, "hiddenFileInput").send_keys(image_path)
-    wait = WebDriverWait(driver, timeout=100)
-
     try:
         wait.until(
-            ec.visibility_of_element_located(
-                (By.CSS_SELECTOR, ".preview-image-loader"),
-            ),
+            ec.visibility_of_element_located((By.CSS_SELECTOR, ".preview-image-loader"))
         )
+        return True
     except TimeoutException:
         try:
             error_element = driver.find_element(
-                By.CSS_SELECTOR,
-                ".design-upload-progress-bar.upload-error",
+                By.CSS_SELECTOR, ".design-upload-progress-bar.upload-error"
             )
             if error_element.is_displayed():
                 limit_message_element = driver.find_element(
-                    By.CSS_SELECTOR,
-                    ".design-upload-message.text-sm",
+                    By.CSS_SELECTOR, ".design-upload-message.text-sm"
                 )
-                if (
-                    "Du hast das tägliche Limit für Uploads erreicht."
-                    in limit_message_element.text
-                ):
-                    logger.error("Upload limit reached.")
+                if "You have reached the upload limit" in limit_message_element.text:
+                    logger.error("Upload-Limit reached.")
                     sys.exit(1)
-                logger.error("Upload failed, error element found.")
-                return False
+                logger.error("Upload error: %s", limit_message_element.text)
         except NoSuchElementException:
-            logger.debug("No upload error detected, proceeding.")
+            logger.debug("No Upload error element found. Continuing...")
+        return False
 
-    wait.until(
-        ec.invisibility_of_element_located((By.CSS_SELECTOR, ".preview-image-loader")),
-    )
 
+def _upload_image(driver: uc.Chrome, image_path: str) -> bool:
+    """
+    Uploads an image to the Spreadshirt platform.
+    param driver: The WebDriver instance.
+    type driver: uc.Chrome
+    param image_path: The file path of the image to upload.
+    type image_path: str
+    return: True if upload was successful, False otherwise.
+    rtype: bool
+    """
+    _wait_and_click(driver, ".card-container.col-xs-1.upload-tile", timeout=60)
+    driver.find_element(By.ID, "hiddenFileInput").send_keys(image_path)
+    wait = WebDriverWait(driver, timeout=10)
+
+    while _preview_image(driver, wait):
+        logger.info("Preview image loader is visible, waiting for it to disappear...")
+        driver.refresh()
+
+    try:
+        wait.until(
+            ec.invisibility_of_element_located(
+                (By.CSS_SELECTOR, ".preview-image-loader")
+            )
+        )
+    except TimeoutException:
+        logger.error("Image upload timed out.")
+        return False
+    except NoSuchElementException:
+        logger.error("No Upload bar found.")
+        return False
+    except Exception as e:
+        logger.error("Unexpected Error:: %s", str(e))
+        return False
+
+    logger.info("Image upload abgeschlossen.")
     return True
 
 
@@ -352,6 +374,8 @@ def _process_overlay(driver: uc.Chrome) -> None:
     :param driver: The WebDriver instance.
     :type driver: uc.Chrome
     """
+
+    logging.info("3 ")
     WebDriverWait(driver, timeout=60).until(
         ec.presence_of_element_located(
             (By.CSS_SELECTOR, ".image-overlay .overlay-content"),
