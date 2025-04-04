@@ -18,9 +18,6 @@ profile management for automated web interactions.
 """
 
 import logging
-from pathlib import Path
-
-from genai_pod.utils import save_cookies, start_chrome
 
 logger = logging.getLogger(__name__)
 
@@ -33,16 +30,21 @@ def verify(profile_name: str, site: str) -> None:
     :param site: The URL of the website to load.
     :type site: str
     """
+    from pathlib import Path
+
+    from genai_pod.utils import load_cookies, save_cookies, start_chrome
+
     driver = start_chrome(profile_name, None)
-    driver.refresh()
     driver.get(site)
+
+    # Now loading cookies after navigation
+    cookies_path = Path("chromedata") / "cookies.json"
+    if cookies_path.exists():
+        load_cookies(driver, cookies_path)
+        driver.refresh()
 
     input("Press ENTER when you are done with the browser and want to save cookies...")
 
-    try:
-        save_cookies(driver, Path("chromedata") / "cookies.json")
-        logger.info("Cookies saved")
-    except Exception as e:
-        logger.exception("Failed to save cookies: %s", e)
-
+    save_cookies(driver, cookies_path)
+    logger.info("Cookies saved")
     driver.quit()

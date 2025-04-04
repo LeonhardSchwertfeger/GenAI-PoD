@@ -375,7 +375,6 @@ def _process_overlay(driver: uc.Chrome) -> None:
     :type driver: uc.Chrome
     """
 
-    logging.info("3 ")
     WebDriverWait(driver, timeout=60).until(
         ec.presence_of_element_located(
             (By.CSS_SELECTOR, ".image-overlay .overlay-content"),

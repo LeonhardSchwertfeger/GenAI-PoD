@@ -47,6 +47,12 @@ def print_version(
     expose_value=False,
     is_eager=True,
 )
+@option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Enable verbose logging (debug level)",
+)
 @pass_context
 def cli(ctx: Context, **kwargs: Any) -> None:
     """Main entry point for the command-line application.
@@ -57,11 +63,15 @@ def cli(ctx: Context, **kwargs: Any) -> None:
     ctx.obj |= kwargs
     ctx.auto_envvar_prefix = "GENAI"
 
+    log_level = logging.DEBUG if kwargs.get("verbose") else logging.INFO
     logging.basicConfig(
-        format="%(asctime)s %(levelname)8s | %(message)s",
+        format="%(asctime)s %(levelname)8s | %(name)s | %(message)s",
         datefmt="%Y/%m/%d %H:%M:%S",
-        level=logging.INFO,
+        level=log_level,
     )
+    logging.getLogger("selenium").setLevel(logging.WARNING)  # reduzing Selenium-Logs
+    logging.getLogger("urllib3").setLevel(logging.WARNING)  # reduzing HTTP-Libs
+    logger.debug("CLI initialisiert mit Log-Level: %s", logging.getLevelName(log_level))
 
 
 @cli.group()
@@ -72,10 +82,17 @@ def cli(ctx: Context, **kwargs: Any) -> None:
     help="The directory to save the images and metadata to.",
     required=True,
 )
+@option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Enable verbose logging (debug level)",
+)
 @pass_context
-def generate(ctx: Context, output_directory: str) -> None:
+def generate(ctx: Context, output_directory: str, verbose: bool) -> None:
     """Group for generate commands."""
     ctx.obj["output_directory"] = output_directory
+    ctx.obj["verbose"] = verbose
 
 
 @generate.command()
@@ -91,18 +108,36 @@ def generate(ctx: Context, output_directory: str) -> None:
     help="Path to the Tor binary.",
     required=False,
 )
+@option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Enable verbose logging (debug level)",
+)
 @pass_context
-def generategpt(ctx: Context, tor_binary_path: str | click.Path) -> None:
+def generategpt(ctx: Context, tor_binary_path: str | click.Path, verbose: bool) -> None:
     """Use GPT to generate images via Selenium."""
     from genai_pod.generators.generate_gpt import (
         AbortScriptError,
         generate_image_selenium_gpt,
     )
 
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+
+    logger.debug("Verbose mode is enabled.")
+
     ctx.obj |= {"tor_binary_path": tor_binary_path}
     while True:
         try:
-            generate_image_selenium_gpt(**ctx.obj)
+            params = {
+                key: ctx.obj[key]
+                for key in ctx.obj
+                if key in {"tor_binary_path", "output_directory"}
+            }
+            generate_image_selenium_gpt(**params)
         except AbortScriptError:
             continue
 
@@ -126,8 +161,10 @@ def spreadshirt(ctx: Context, **kwargs: Any) -> None:
     """Upload an image to Spreadshirt."""
     from genai_pod.uploaders.spreadshirt import upload_spreadshirt
 
-    ctx.obj |= kwargs
-    upload_spreadshirt(**ctx.obj)
+    # Filter out debug parameters
+    params = {k: v for k, v in ctx.obj.items() if k not in {"verbose"}}
+    params |= kwargs
+    upload_spreadshirt(**params)
 
 
 @upload.command()
@@ -136,8 +173,9 @@ def redbubble(ctx: Context, **kwargs: Any) -> None:
     """Upload an image to Redbubble."""
     from genai_pod.uploaders.redbubble import upload_redbubble
 
-    ctx.obj |= kwargs
-    upload_redbubble(**ctx.obj)
+    params = {k: v for k, v in ctx.obj.items() if k not in {"verbose"}}
+    params |= kwargs
+    upload_redbubble(**params)
 
 
 @cli.command()
