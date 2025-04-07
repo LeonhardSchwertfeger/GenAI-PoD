@@ -76,7 +76,7 @@ dev = [
     # dev
     "ipykernel", # python3 -m ipykernel install --user --name=genai_pod
     # documentation
-    "sphinx==7.4.7", # Sphinx must have 7.4.7 and nbsphinx 0.8.12 due to compatibility issues between nbsphinx and Sphinx versions ≥8.
+    "sphinx==8.2.3", # Sphinx must have 7.4.7 and nbsphinx 0.8.12 due to compatibility issues between nbsphinx and Sphinx versions ≥8.
     "sphinx-click",
     "sphinx-rtd-theme",
     "nbsphinx==0.9.7",
