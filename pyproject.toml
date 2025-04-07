@@ -79,7 +79,7 @@ dev = [
     "sphinx==7.4.7", # Sphinx must have 7.4.7 and nbsphinx 0.8.12 due to compatibility issues between nbsphinx and Sphinx versions ≥8.
     "sphinx-click",
     "sphinx-rtd-theme",
-    "nbsphinx==0.8.12",
+    "nbsphinx==0.9.7",
     "ipython",
 ]
 test = ["pytest", "pytest-cov"]

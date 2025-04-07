@@ -1,7 +1,7 @@
 click
 cloup
 ipython
-nbsphinx==0.8.12
+nbsphinx==0.9.7
 numpy
 pillow
 pytz
