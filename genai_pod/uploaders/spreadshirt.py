@@ -321,7 +321,12 @@ def _preview_image(driver: uc.Chrome, wait: Any) -> bool:
                 limit_message_element = driver.find_element(
                     By.CSS_SELECTOR, ".design-upload-message.text-sm"
                 )
-                if "You have reached the upload limit" in limit_message_element.text:
+                logging.info("Upload error: %s", limit_message_element.text)
+
+                if (
+                    limit_message_element.text.strip()
+                    == "Du hast das tägliche Limit für Uploads erreicht."
+                ):
                     logger.error("Upload-Limit reached.")
                     sys.exit(1)
                 logger.error("Upload error: %s", limit_message_element.text)

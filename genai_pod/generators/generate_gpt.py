@@ -19,8 +19,6 @@ from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
 from re import sub
-from secrets import choice, randbelow
-from tempfile import NamedTemporaryFile
 from time import sleep
 
 import undetected_chromedriver as uc
@@ -114,7 +112,7 @@ def _wait_for_element(driver: uc.Chrome, xpath: str, timeout: int = 4) -> None:
 
 
 def _get_image_src(driver: uc.Chrome) -> str:
-    """Get the source URL of the image element with specific characteristics on the page.
+    """Get the source URL of the visible image element on the page.
 
     :param driver: The Selenium WebDriver instance.
     :type driver: uc.Chrome
@@ -122,26 +120,37 @@ def _get_image_src(driver: uc.Chrome) -> str:
     :rtype: str
     :raises AbortScriptError: If no valid image source is found.
     """
-    from selenium.webdriver.remote.webelement import WebElement
 
+    # Wait for the image generation to start
     WebDriverWait(driver, 60).until(
         ec.presence_of_element_located(
             (By.XPATH, "//button[contains(., 'Bilderstellung wird gestartet')]")
         )
     )
+    logging.info("Waiting for image generation to start...")
 
+    # Wait for the image generation to complete (button disappears)
     WebDriverWait(driver, 250).until(
         ec.invisibility_of_element_located(
             (By.XPATH, "//button[contains(., 'Bilderstellung wird gestartet')]")
         )
     )
     sleep(120)
+    logging.info("Image generation started.")
 
-    image_div: WebElement = WebDriverWait(driver, 150).until(
-        lambda d: d.find_element(By.CSS_SELECTOR, "div.absolute.left-0.right-0.top-0")
+    # Wait for the visible image to be present in the correct container
+    image_element = WebDriverWait(driver, 150).until(
+        ec.presence_of_element_located(
+            (
+                By.CSS_SELECTOR,
+                "div.relative.z-1.w-full.overflow-hidden img[style*='opacity: 1']",
+            )
+        )
     )
-    image_element = image_div.find_element(By.TAG_NAME, "img")
+    logging.info("Visible image found.")
+
     image_src = image_element.get_attribute("src")
+    logging.info("Image source: %s", image_src)
     if isinstance(image_src, str) and image_src.startswith("http"):
         return image_src
 
@@ -511,6 +520,9 @@ def _scrape_vexels_image(driver: uc.Chrome) -> str | None:
     :rtype: str | None
     :raises AbortScriptError: If scraping fails.
     """
+    from secrets import choice, randbelow
+    from tempfile import NamedTemporaryFile
+
     try:
         driver.set_page_load_timeout(60)
         driver.get(f"https://de.vexels.com/nischen/lustig/{randbelow(30) + 1}/")
